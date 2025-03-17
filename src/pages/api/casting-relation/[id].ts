@@ -58,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { filmId, castingId, role } = req.body;
 
       if (!filmId || !castingId || !role) {
-        return res.status(400).json({ error: 'Film ID, Casting ID, dan Role diperlukan' });
+        return res.status(400).json({ error: 'Film ID, Casting ID, and Role are required' });
       }
 
       const updatedCastingRelation = await prisma.castingRelation.update({
@@ -80,8 +80,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(405).json({ error: 'Method Not Allowed' });
-  } catch (error) {
-    console.error('Error handling API request:', error);
-    return res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Error handling API request:', error.message);
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: error.message || 'An unexpected error occurred',
+      });
+    }
+
+    console.error('Unknown error', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
   }
 }

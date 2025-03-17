@@ -64,11 +64,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(405).json({ error: 'Method Not Allowed' });
-  } catch (error) {
-    console.error('Error handling API request:', error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Error handling API request:', error.message);
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: error.message || 'Terjadi kesalahan tak terduga',
+      });
+    }
+
+    console.error('Unknown error', error);
     return res.status(500).json({
       error: 'Internal Server Error',
-      message: error.message || 'Terjadi kesalahan tak terduga',
+      message: 'Terjadi kesalahan tak terduga',
     });
   }
 }

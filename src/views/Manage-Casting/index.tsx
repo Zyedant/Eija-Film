@@ -39,10 +39,9 @@ const ManageCasting = () => {
   const [castingToDelete, setCastingToDelete] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState(''); 
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
 
-  
   useEffect(() => {
     const fetchCastings = async () => {
       try {
@@ -83,7 +82,6 @@ const ManageCasting = () => {
     setCurrentPage(1);
   };
 
-  
   const handleSaveCasting = async () => {
     if (!realName || (!photoUrl && !actorPhotoFile) || !stageName) {
       setErrorMessage("Real Name, Stage Name, and Photo (URL or File) are required");
@@ -97,7 +95,6 @@ const ManageCasting = () => {
       const token = Cookies.get('token');
       let uploadedPhotoUrl = photoUrl;
 
-      
       if (actorPhotoFile) {
         const formData = new FormData();
         formData.append("file", actorPhotoFile);
@@ -116,7 +113,6 @@ const ManageCasting = () => {
       let response;
 
       if (editCastingId) {
-        
         response = await axios.put(`/api/casting/${editCastingId}`, castingData, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -124,7 +120,6 @@ const ManageCasting = () => {
         });
         setCastings(castings.map((casting) => (casting.id === editCastingId ? response.data : casting)));
       } else {
-        
         response = await axios.post("/api/casting", castingData, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -133,7 +128,6 @@ const ManageCasting = () => {
         setCastings((prev) => [...prev, response.data]);
       }
 
-      
       setRealName('');
       setPhotoUrl('');
       setStageName('');
@@ -148,7 +142,6 @@ const ManageCasting = () => {
     }
   };
 
-  
   const handleDeleteCasting = async () => {
     if (!castingToDelete) return;
 
@@ -170,7 +163,6 @@ const ManageCasting = () => {
     }
   };
 
-  
   const handleEditCasting = (casting: any) => {
     setRealName(casting.realName);
     setPhotoUrl(casting.photoUrl);
@@ -179,7 +171,6 @@ const ManageCasting = () => {
     setShowForm(true);
   };
 
-  
   const handleCancel = () => {
     setShowForm(false);
     setEditCastingId(null);
@@ -189,7 +180,6 @@ const ManageCasting = () => {
     setActorPhotoFile(null);
   };
 
-  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;
     if (file) {
@@ -204,7 +194,7 @@ const ManageCasting = () => {
           <h2 className="text-2xl font-semibold text-yellow-500 mb-4">
             {editCastingId ? "Edit Casting" : "Add New Casting"}
           </h2>
-          {errorMessage && <Alert variant="warning" className="mb-4">{errorMessage}</Alert>}
+          {errorMessage && <Alert variant="default" className="mb-4">{errorMessage}</Alert>}
 
           <div className="space-y-4">
             <input
@@ -284,7 +274,7 @@ const ManageCasting = () => {
             </Button>
           </div>
 
-          {errorMessage && <Alert variant="warning" className="mb-4">{errorMessage}</Alert>}
+          {errorMessage && <Alert variant="default" className="mb-4">{errorMessage}</Alert>}
 
           <div className="overflow-x-auto border border-gray-300 dark:border-gray-700 rounded-lg">
             <Table className="min-w-max table-auto text-sm">
@@ -383,7 +373,7 @@ const ManageCasting = () => {
               Apakah Anda yakin?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
-            Anda tidak dapat mengembalikan film yang telah dihapus!
+              Anda tidak dapat mengembalikan film yang telah dihapus!
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

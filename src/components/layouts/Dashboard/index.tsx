@@ -5,15 +5,34 @@ import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { FaRegClock, FaCalendarAlt, FaFilm, FaTv, FaRocket, FaEye, FaBookmark, FaStar, FaPlay, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
+interface Film {
+  id: string;
+  title: string;
+  description: string;
+  posterUrl: string;
+  releaseYear: number;
+  duration: number;
+  genres: string[];
+  category: string;
+  createdAt: string;
+  slug: string;
+}
+
+interface UserData {
+  role: string;
+  name: string;
+  message: string;
+}
+
 const Dashboard = () => {
-  const [films, setFilms] = useState([]);
-  const [userData, setUserData] = useState(null);
+  const [films, setFilms] = useState<Film[]>([]);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(true); 
-  const sliderRef = useRef(null);
-  const sliderIntervalRef = useRef(null);
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const sliderIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const token = Cookies.get("token");
   const router = useRouter();
 
@@ -42,7 +61,7 @@ const Dashboard = () => {
       const role = Cookies.get("role");
       const userName = Cookies.get("name") || "";
       setUserData({ 
-        role, 
+        role: role || "", 
         name: userName,
         message: `Welcome back${userName ? ', ' + userName : ''}!` 
       });
@@ -67,7 +86,7 @@ const Dashboard = () => {
         const data = await res.json();
         setFilms(data);
       } catch (err) {
-        setError(err.message);
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
         setLoading(false);
       }
@@ -99,11 +118,11 @@ const Dashboard = () => {
     .filter((film) => {
       const filmDate = new Date(film.createdAt);
       const currentDate = new Date();
-      const timeDiff = currentDate - filmDate;
+      const timeDiff = currentDate.getTime() - filmDate.getTime();
       const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
       return daysDiff <= 30;
     })
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
   const movies = films.filter((film) => film.category === "MOVIE");
@@ -132,12 +151,12 @@ const Dashboard = () => {
     }
   };
   
-  const handleNavigateToFilm = (slug, event) => {
+  const handleNavigateToFilm = (slug: string, event: React.MouseEvent) => {
     event.preventDefault();
     router.push(`/film/${slug}`);
   };
 
-  const renderFilmCards = (filmList) => {
+  const renderFilmCards = (filmList: Film[]) => {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
         {filmList.slice(0, 5).map((film) => (

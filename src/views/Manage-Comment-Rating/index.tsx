@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import axios from "axios";
 import Cookies from "js-cookie";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert } from "@/components/ui/alert";
@@ -25,6 +25,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface CommentRating {
+  id: string;
+  content: string;
+  filmId: string;
+  userId: string;
+  rating?: number;
+  ratingId?: string;
+}
+
+interface Film {
+  id: string;
+  title: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+}
 
 const CommentRatingForm = ({ onSave, onCancel, dataToEdit, films, userId, userRole }) => {
   const [content, setContent] = useState(dataToEdit?.content || "");
@@ -105,23 +123,22 @@ const CommentRatingForm = ({ onSave, onCancel, dataToEdit, films, userId, userRo
 };
 
 const ManageCommentRating = () => {
-  const [commentsRatings, setCommentsRatings] = useState([]);
-  const [films, setFilms] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [commentsRatings, setCommentsRatings] = useState<CommentRating[]>([]);
+  const [films, setFilms] = useState<Film[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [dataToEdit, setDataToEdit] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [dataToEdit, setDataToEdit] = useState<CommentRating | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState<{ commentId: string; ratingId?: string } | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
   const router = useRouter();
 
-  
   const fetchData = async () => {
     const token = Cookies.get("token");
     if (!token) {
@@ -131,7 +148,13 @@ const ManageCommentRating = () => {
     }
 
     try {
-      const decoded = jwt.decode(token);
+      const decoded = jwt.decode(token) as JwtPayload;
+      if (!decoded) {
+        setError("Token tidak valid.");
+        setLoading(false);
+        return;
+      }
+
       setUserId(decoded.id);
       setUserRole(decoded.role);
 
@@ -142,9 +165,8 @@ const ManageCommentRating = () => {
         axios.get("/api/user", { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
-      
-      const combinedData = commentResponse.data.map((comment) => {
-        const rating = ratingResponse.data.find((rating) => rating.commentId === comment.id);
+      const combinedData = commentResponse.data.map((comment: CommentRating) => {
+        const rating = ratingResponse.data.find((rating: any) => rating.commentId === comment.id);
         return {
           ...comment,
           rating: rating ? rating.score : null,
@@ -167,25 +189,22 @@ const ManageCommentRating = () => {
     fetchData();
   }, []);
 
-  
-  const handleSave = async (data) => {
+  const handleSave = async (data: { filmId: string; content: string; score: number }) => {
     const token = Cookies.get("token");
     if (!token) {
       setError("Anda harus login untuk menyimpan data.");
       return;
     }
-  
+
     try {
       if (dataToEdit) {
-        
         const commentResponse = await axios.put(`/api/comment/${dataToEdit.id}`, {
           content: data.content,
           filmId: data.filmId,
         }, {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
-        
+
         if (dataToEdit.ratingId) {
           await axios.put(`/api/rating/${dataToEdit.ratingId}`, {
             score: data.score,
@@ -193,7 +212,6 @@ const ManageCommentRating = () => {
             headers: { Authorization: `Bearer ${token}` },
           });
         } else {
-          
           await axios.post("/api/rating", {
             score: data.score,
             filmId: data.filmId,
@@ -204,7 +222,6 @@ const ManageCommentRating = () => {
           });
         }
       } else {
-        
         const commentResponse = await axios.post("/api/comment", {
           content: data.content,
           filmId: data.filmId,
@@ -212,8 +229,7 @@ const ManageCommentRating = () => {
         }, {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
-        
+
         await axios.post("/api/rating", {
           score: data.score,
           filmId: data.filmId,
@@ -223,37 +239,32 @@ const ManageCommentRating = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
-  
-      
+
       fetchData();
       setShowForm(false);
       setDataToEdit(null);
     } catch (error) {
       console.error("Error saving data:", error);
-      setError(error.response?.data?.error || "Gagal menyimpan data.");
+      setError("Gagal menyimpan data.");
     }
   };
 
-  
   const handleDelete = async () => {
     if (!itemToDelete) return;
 
     try {
       const token = Cookies.get("token");
 
-      
       if (itemToDelete.ratingId) {
         await axios.delete(`/api/rating/${itemToDelete.ratingId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
 
-      
       await axios.delete(`/api/comment/${itemToDelete.commentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      
       fetchData();
       setShowDeleteDialog(false);
     } catch (error) {
@@ -261,15 +272,15 @@ const ManageCommentRating = () => {
     }
   };
 
-  
-  const handleEdit = (data) => {
+  const handleEdit = (data: CommentRating) => {
     if (userRole === "ADMIN" || data.userId === userId) {
       setDataToEdit({
         id: data.id,
         content: data.content,
         filmId: data.filmId,
-        score: data.rating,
+        rating: data.rating,
         ratingId: data.ratingId,
+        userId: data.userId,
       });
       setShowForm(true);
     } else {
@@ -277,43 +288,37 @@ const ManageCommentRating = () => {
     }
   };
 
-  
-  const getFilmTitleById = (filmId) => {
+  const getFilmTitleById = (filmId: string) => {
     const film = films.find((film) => film.id === filmId);
     return film ? film.title : "Film tidak ditemukan";
   };
 
-  
-  const getUserNameById = (userId) => {
+  const getUserNameById = (userId: string) => {
     const user = users.find((user) => user.id === userId);
     return user ? user.name : "User tidak ditemukan";
   };
 
-  
-  const canEditOrDelete = (data) => {
+  const canEditOrDelete = (data: CommentRating) => {
     return userRole === "ADMIN" || data.userId === userId;
   };
 
-  
   const totalItems = commentsRatings.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentCommentsRatings = commentsRatings.slice(startIndex, endIndex);
 
-  console.log("currentCommentsRatings:", currentCommentsRatings);
-
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (value) => {
+  const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(Number(value));
     setCurrentPage(1);
   };
 
   if (loading) return <div>Memuat...</div>;
-  if (error) return <Alert variant="error">{error}</Alert>;
+  if (error) return <Alert variant="destructive">{error}</Alert>;
 
   return (
     <main className="bg-gray-100 dark:bg-gray-800 p-6">

@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-
 function getUserIdFromToken(req: NextApiRequest): string | null {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
@@ -37,7 +36,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    
     if (req.method === 'GET') {
       const genreRelations = await prisma.genreRelation.findMany({
         where: { filmId: String(filmId) },
@@ -93,9 +91,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
     
         return res.status(200).json(updatedRelation);
-      } catch (error) {
-        console.error('Error updating genre relation:', error);
-        return res.status(500).json({ error: error.message || 'Internal Server Error' });
+      } catch (error: unknown) { 
+        if (error instanceof Error) {
+          console.error('Error updating genre relation:', error.message);
+          return res.status(500).json({ error: error.message || 'Internal Server Error' });
+        }
+        console.error('Unknown error', error);
+        return res.status(500).json({ error: 'Internal Server Error', message: 'An unexpected error occurred' });
       }
     }
 
@@ -129,18 +131,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
     
         return res.status(204).json({ message: 'GenreRelation berhasil dihapus' }); 
-      } catch (error) {
-        console.error('Error deleting genre relation:', error);
-        return res.status(500).json({ error: error.message || 'Internal Server Error' });
+      } catch (error: unknown) { 
+        if (error instanceof Error) {
+          console.error('Error deleting genre relation:', error.message);
+          return res.status(500).json({ error: error.message || 'Internal Server Error' });
+        }
+        console.error('Unknown error', error);
+        return res.status(500).json({ error: 'Internal Server Error', message: 'An unexpected error occurred' });
       }
     }
     
     return res.status(405).json({ error: 'Method Not Allowed' });
-  } catch (error) {
-    console.error('Error handling API request:', error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Error handling API request:', error.message);
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: error.message || 'Terjadi kesalahan tak terduga',
+      });
+    }
+    console.error('Unknown error', error);
     return res.status(500).json({
       error: 'Internal Server Error',
-      message: error.message || 'Terjadi kesalahan tak terduga',
+      message: 'Terjadi kesalahan tak terduga',
     });
   }
 }

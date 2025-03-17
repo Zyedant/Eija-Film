@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FaChartLine, FaDollarSign, FaUsers, FaExclamationTriangle } from "react-icons/fa";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const AdminDashboard = ({ showManageUsers }) => {
-  const [role, setRole] = useState(null);
+const AdminDashboard = () => {
+  const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   
@@ -15,7 +15,7 @@ const AdminDashboard = ({ showManageUsers }) => {
     if (!token) {
       router.push('/auth/login');
     } else {
-      const userRole = Cookies.get('role');
+      const userRole = Cookies.get('role') || null;
       setRole(userRole);
       setLoading(false);
     }
@@ -100,12 +100,6 @@ const AdminDashboard = ({ showManageUsers }) => {
           </Card>
         ))}
       </div>
-
-      {showManageUsers && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">User Management</h2>
-        </div>
-      )}
     </main>
   );
 };

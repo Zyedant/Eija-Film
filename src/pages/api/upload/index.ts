@@ -22,10 +22,10 @@ export default async function handler(req, res) {
     const form = formidable({
       uploadDir: uploadDir,
       keepExtensions: true,
-      maxFileSize: 10 * 1024 * 1024, 
+      maxFileSize: 10 * 1024 * 1024,
     })
 
-    const [fields, files] = await new Promise((resolve, reject) => {
+    const [fields, files] = await new Promise<[any, any]>((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) return reject(err)
         resolve([fields, files])
@@ -42,18 +42,25 @@ export default async function handler(req, res) {
     }
 
     const filename = uploadedFile.newFilename || uploadedFile.name
-
     const fileUrl = `/uploads/${filename}`
 
     return res.status(200).json({
       imageUrl: fileUrl,
       success: true,
     })
-  } catch (error) {
-    console.error('Upload error:', error)
-    return res.status(500).json({
-      message: 'File upload failed',
-      error: error.message,
-    })
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Upload error:', error.message)
+      return res.status(500).json({
+        message: 'File upload failed',
+        error: error.message,
+      })
+    } else {
+      console.error('Unknown error:', error)
+      return res.status(500).json({
+        message: 'File upload failed',
+        error: 'An unexpected error occurred.',
+      })
+    }
   }
 }

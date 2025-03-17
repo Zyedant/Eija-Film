@@ -3,7 +3,27 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import { FaSun, FaMoon, FaSearch, FaTimes, FaUserCircle, FaChevronDown } from "react-icons/fa";
 import Cookies from "js-cookie";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
+
+interface Film {
+  id: string;
+  title: string;
+  description: string;
+  posterUrl: string;
+  releaseYear: number;
+  duration: number;
+  genres: string[];
+  category: string;
+  createdAt: string;
+  slug: string;
+}
+
+interface UserData {
+  id: string;
+  name: string;
+  imageUrl: string;
+  role: string;
+}
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,34 +34,36 @@ const Navbar = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredFilms, setFilteredFilms] = useState([]);
-  const [films, setFilms] = useState([]);
+  const [filteredFilms, setFilteredFilms] = useState<Film[]>([]);
+  const [films, setFilms] = useState<Film[]>([]);
   const [userName, setUserName] = useState("");
   const [userImage, setUserImage] = useState("");
   const [userRole, setUserRole] = useState("");
   const router = useRouter();
-  const profileRef = useRef(null);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const token = Cookies.get("token");
     const isLoggedIn = Cookies.get("isLoggedIn");
-    setIsLoggedIn(token && isLoggedIn === "true");
-
+  
+    // Pastikan nilai isLoggedIn adalah boolean
+    setIsLoggedIn(!!(token && isLoggedIn === "true"));
+  
     if (token && isLoggedIn === "true") {
-      const decoded = jwt.decode(token);
+      const decoded = jwt.decode(token) as JwtPayload;
       const userId = decoded?.id || Cookies.get("userId");
-
+  
       if (userId) {
         fetchUserData(userId);
       } else {
         console.error("User ID not found in token or cookies");
       }
     }
-
+  
     const userRole = Cookies.get("role");
     setIsAdmin(userRole === "ADMIN");
     setIsAuthor(userRole === "AUTHOR");
-
+  
     if (userRole === "ADMIN") {
       setUserRole("Admin");
     } else if (userRole === "AUTHOR") {
@@ -49,7 +71,7 @@ const Navbar = () => {
     } else {
       setUserRole("User");
     }
-
+  
     const savedTheme = Cookies.get("theme");
     if (savedTheme === "dark") {
       setIsDarkMode(true);
@@ -58,7 +80,7 @@ const Navbar = () => {
       setIsDarkMode(false);
       document.documentElement.classList.remove("dark");
     }
-
+  
     const fetchFilms = async () => {
       try {
         const response = await fetch("/api/film");
@@ -69,22 +91,22 @@ const Navbar = () => {
         console.error("Error fetching films:", error);
       }
     };
-
+  
     fetchFilms();
-
-    const handleClickOutside = (event) => {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
+  
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
       }
     };
-
+  
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
-  const fetchUserData = async (userId) => {
+  const fetchUserData = async (userId: string) => {
     try {
       const response = await fetch(`/api/user/${userId}`, {
         headers: {
@@ -152,12 +174,12 @@ const Navbar = () => {
     setIsProfileOpen(!isProfileOpen);
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
   };
 
-  const navigateToFilm = (filmId) => {
+  const navigateToFilm = (filmId: string) => {
     router.push(`/film/${filmId}`);
     toggleSearch();
   };
@@ -263,9 +285,9 @@ const Navbar = () => {
                             <h3 className={`font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}>
                               {film.title}
                             </h3>
-                            {film.year && (
+                            {film.releaseYear && (
                               <p className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-                                {film.year}
+                                {film.releaseYear}
                               </p>
                             )}
                           </div>

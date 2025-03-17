@@ -60,20 +60,21 @@ const GenreRelationPage = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Sidebar */}
       <AdminSidebar
+        onUsersClick={() => {}} 
         onDashboardClick={handleDashboardClick}
         onFilmClick={handleFilmClick}
+        onGenreClick={() => {}} 
         onGenreRelationClick={handleGenreRelationClick}
+        onCastingClick={() => {}} 
         onCastingRelationClick={handleCastingRelationClick}
+        onCommentRatingClick={() => {}} 
         currentPage={currentPage}
       />
 
       <div className="flex-1">
-        {/* NavBar */}
         <NavBar />
 
-        {/* Render pages based on the currentPage */}
         {currentPage === "dashboard" && <AuthorDashboard />}
         {currentPage === "film" && <ManageFilm />}
         {currentPage === "genre-relation" && <ManageGenreRelation />}

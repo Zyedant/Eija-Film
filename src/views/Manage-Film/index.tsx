@@ -25,15 +25,34 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface User {
+  id: string;
+  name: string;
+  role: string;
+}
 
-const FilmDetail = ({ film, onBack, users, onSave }) => {
-  const [isEditing, setIsEditing] = useState(false); 
-  const [editedFilm, setEditedFilm] = useState(film); 
-  const [uploadTypePoster, setUploadTypePoster] = useState('url'); 
-  const [uploadTypeTrailer, setUploadTypeTrailer] = useState('url'); 
+interface Film {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  posterUrl: string;
+  trailerUrl: string;
+  duration: number;
+  releaseYear: number;
+  category: string;
+  episode?: number;
+  userId: string;
+}
+
+const FilmDetail = ({ film, onBack, users, onSave }: { film: Film; onBack: () => void; users: User[]; onSave: (film: Film) => void }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedFilm, setEditedFilm] = useState(film);
+  const [uploadTypePoster, setUploadTypePoster] = useState('url');
+  const [uploadTypeTrailer, setUploadTypeTrailer] = useState('url');
 
   const handleEdit = () => {
-    setIsEditing(true); 
+    setIsEditing(true);
   };
 
   const handleSave = async () => {
@@ -44,22 +63,22 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setIsEditing(false); 
-      onSave(editedFilm); 
+      setIsEditing(false);
+      onSave(editedFilm);
     } catch (error) {
       console.error("Gagal menyimpan perubahan", error);
     }
   };
 
-  const handleChange = (e, field) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, field: keyof Film) => {
     setEditedFilm({
       ...editedFilm,
       [field]: e.target.value,
     });
   };
 
-  const handleFileChange = async (e, type) => {
-    const file = e.target.files[0];
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "poster" | "trailer") => {
+    const file = e.target.files?.[0];
     if (file) {
       const formData = new FormData();
       formData.append("file", file);
@@ -85,7 +104,7 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
     }
   };
 
-  const getUserNameById = (userId) => {
+  const getUserNameById = (userId: string) => {
     if (!users || users.length === 0) return "Anonim";
     const user = users.find((user) => user.id === userId);
     return user ? user.name : "Anonim";
@@ -96,22 +115,22 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold text-yellow-500">Detail Film</h2>
         <div className="flex space-x-4">
-          <Button 
-            onClick={onBack} 
+          <Button
+            onClick={onBack}
             className="flex items-center bg-gray-500 text-white hover:bg-gray-600"
           >
             <FaArrowLeft className="mr-2" /> Kembali
           </Button>
           {isEditing ? (
-            <Button 
-              onClick={handleSave} 
+            <Button
+              onClick={handleSave}
               className="flex items-center bg-yellow-500 text-white hover:bg-yellow-600"
             >
               <FaSave className="mr-2" /> Simpan
             </Button>
           ) : (
-            <Button 
-              onClick={handleEdit} 
+            <Button
+              onClick={handleEdit}
               className="flex items-center bg-yellow-500 text-white hover:bg-yellow-600"
             >
               <FaEdit className="mr-2" /> Edit
@@ -127,9 +146,9 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
               <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Poster</h3>
               <div className="aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
                 {editedFilm.posterUrl ? (
-                  <img 
-                    src={editedFilm.posterUrl} 
-                    alt={editedFilm.title} 
+                  <img
+                    src={editedFilm.posterUrl}
+                    alt={editedFilm.title}
                     className="w-full h-full object-cover"
                   />
                 ) : (
@@ -171,15 +190,15 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
               <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Trailer</h3>
               <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
                 {editedFilm.trailerUrl && editedFilm.trailerUrl.includes('youtube') ? (
-                  <iframe 
-                    src={editedFilm.trailerUrl.replace('watch?v=', 'embed/')} 
-                    className="w-full h-full" 
+                  <iframe
+                    src={editedFilm.trailerUrl.replace('watch?v=', 'embed/')}
+                    className="w-full h-full"
                     allowFullScreen
                   ></iframe>
                 ) : editedFilm.trailerUrl ? (
-                  <video 
-                    src={editedFilm.trailerUrl} 
-                    controls 
+                  <video
+                    src={editedFilm.trailerUrl}
+                    controls
                     className="w-full h-full"
                   >
                     Browser Anda tidak mendukung pemutaran video
@@ -235,7 +254,7 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
                 editedFilm.title
               )}
             </h1>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <div className="space-y-4">
                 <div>
@@ -251,7 +270,7 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
                     <p className="text-gray-800 dark:text-gray-200">{editedFilm.slug}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Kategori</h3>
                   {isEditing ? (
@@ -270,7 +289,7 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
                     </div>
                   )}
                 </div>
-                
+
                 {(editedFilm.category === "SERIES" || editedFilm.category === "ANIME") && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Episode</h3>
@@ -286,7 +305,7 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
                     )}
                   </div>
                 )}
-                
+
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Durasi</h3>
                   {isEditing ? (
@@ -301,7 +320,7 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Tahun Rilis</h3>
@@ -316,19 +335,19 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
                     <p className="text-gray-800 dark:text-gray-200">{editedFilm.releaseYear}</p>
                   )}
                 </div>
-                
+
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Diinput oleh</h3>
                   <p className="text-gray-800 dark:text-gray-200">{getUserNameById(editedFilm.userId)}</p>
                 </div>
-                
+
                 <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">ID Film</h3>
                   <p className="text-gray-800 dark:text-gray-200 break-all">{editedFilm.id}</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-6">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Deskripsi</h3>
               {isEditing ? (
@@ -343,7 +362,7 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
                 </div>
               )}
             </div>
-            
+
             <div className="mt-6">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">URLs</h3>
               <div className="space-y-2">
@@ -382,8 +401,7 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
   );
 };
 
-
-const FilmForm = ({ onSaveFilm, onCancel }) => {
+const FilmForm = ({ onSaveFilm, onCancel }: { onSaveFilm: (film: Film) => void; onCancel: () => void }) => {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
@@ -396,8 +414,8 @@ const FilmForm = ({ onSaveFilm, onCancel }) => {
   const [uploadTypePoster, setUploadTypePoster] = useState('url');
   const [uploadTypeTrailer, setUploadTypeTrailer] = useState('url');
 
-  const handleFileChange = async (e, type) => {
-    const file = e.target.files[0];
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "poster" | "trailer") => {
+    const file = e.target.files?.[0];
     if (file) {
       const formData = new FormData();
       formData.append("file", file);
@@ -423,32 +441,33 @@ const FilmForm = ({ onSaveFilm, onCancel }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     const token = Cookies.get('token');
     if (!token) {
       console.error("User tidak ditemukan atau belum login.");
       return;
     }
-  
+
     try {
-      const decoded = jwt.decode(token);
+      const decoded = jwt.decode(token) as { id: string };
       const userId = decoded.id;
-  
-      const newFilm = {
+
+      const newFilm: Film = {
+        id: "", // ID akan di-generate oleh backend
         title,
         slug,
         description,
         posterUrl,
         trailerUrl,
-        duration: parseInt(duration, 10),
-        releaseYear: parseInt(releaseYear, 10),
+        duration: parseInt(duration.toString(), 10),
+        releaseYear: parseInt(releaseYear.toString(), 10),
         category,
-        episode: category === 'MOVIE' ? null : parseInt(episode, 10),
+        episode: category === 'MOVIE' ? undefined : parseInt(episode.toString(), 10),
         userId,
       };
-  
+
       await axios.post("/api/film", newFilm, {
         headers: {
           Authorization: `Bearer ${token}`
@@ -507,7 +526,7 @@ const FilmForm = ({ onSaveFilm, onCancel }) => {
             <input
               type="number"
               value={episode}
-              onChange={(e) => setEpisode(e.target.value)}
+              onChange={(e) => setEpisode(parseInt(e.target.value, 10))}
               className="w-full p-3 border border-gray-300 rounded-md"
               min="0"
             />
@@ -582,7 +601,7 @@ const FilmForm = ({ onSaveFilm, onCancel }) => {
           <input
             type="number"
             value={duration}
-            onChange={(e) => setDuration(e.target.value)}
+            onChange={(e) => setDuration(parseInt(e.target.value, 10))}
             className="w-full p-3 border border-gray-300 rounded-md"
           />
         </div>
@@ -592,7 +611,7 @@ const FilmForm = ({ onSaveFilm, onCancel }) => {
           <input
             type="number"
             value={releaseYear}
-            onChange={(e) => setReleaseYear(e.target.value)}
+            onChange={(e) => setReleaseYear(parseInt(e.target.value, 10))}
             className="w-full p-3 border border-gray-300 rounded-md"
           />
         </div>
@@ -610,19 +629,18 @@ const FilmForm = ({ onSaveFilm, onCancel }) => {
   );
 };
 
-
 const ManageFilm = () => {
-  const [films, setFilms] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [films, setFilms] = useState<Film[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [selectedFilm, setSelectedFilm] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [selectedFilm, setSelectedFilm] = useState<Film | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [filmToDelete, setFilmToDelete] = useState(null);
-  const [itemsPerPage, setItemsPerPage] = useState(10); 
-  const [currentPage, setCurrentPage] = useState(1); 
+  const [filmToDelete, setFilmToDelete] = useState<string | null>(null);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
   const { search } = router.query;
@@ -636,13 +654,13 @@ const ManageFilm = () => {
           return;
         }
 
-        const decoded = jwt.decode(token);
+        const decoded = jwt.decode(token) as { id: string; role: string };
         if (!decoded) {
           router.push('/login');
           return;
         }
 
-        setCurrentUser(decoded);
+        setCurrentUser({ id: decoded.id, name: "", role: decoded.role });
         setIsAdmin(decoded.role === 'ADMIN');
       } catch (error) {
         console.error("Failed to decode token", error);
@@ -670,7 +688,7 @@ const ManageFilm = () => {
         if (isAdmin) {
           setFilms(filmResponse.data);
         } else {
-          const userFilms = filmResponse.data.filter(film => film.userId === currentUser.id);
+          const userFilms = filmResponse.data.filter((film: Film) => film.userId === currentUser.id);
           setFilms(userFilms);
         }
 
@@ -695,24 +713,23 @@ const ManageFilm = () => {
 
   const filteredFilms = films.filter(
     (film) =>
-      film.title.toLowerCase().includes((search || "").toLowerCase()) ||
-      film.slug.toLowerCase().includes((search || "").toLowerCase())
+      film.title.toLowerCase().includes((search?.toString() || "").toLowerCase()) ||
+      film.slug.toLowerCase().includes((search?.toString() || "").toLowerCase())
   );
 
-  
   const totalItems = filteredFilms.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentFilms = filteredFilms.slice(startIndex, endIndex);
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (value) => {
+  const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(Number(value));
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleDeleteFilm = async () => {
@@ -720,48 +737,48 @@ const ManageFilm = () => {
 
     try {
       const token = Cookies.get('token');
-      
+
       if (!isAdmin) {
         const filmToDeleteCheck = films.find(film => film.id === filmToDelete);
-        if (filmToDeleteCheck && filmToDeleteCheck.userId !== currentUser.id) {
+        if (filmToDeleteCheck && filmToDeleteCheck.userId !== currentUser?.id) {
           console.error("Tidak memiliki izin untuk menghapus film ini.");
           return;
         }
       }
-      
+
       await axios.delete(`/api/film/${filmToDelete}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       setFilms((prevFilms) => prevFilms.filter((film) => film.id !== filmToDelete));
-      setShowDeleteDialog(false); 
+      setShowDeleteDialog(false);
     } catch (error) {
       console.error("Gagal menghapus film", error);
     }
   };
 
-  const handleViewFilmDetails = (film) => {
+  const handleViewFilmDetails = (film: Film) => {
     setSelectedFilm(film);
   };
 
-  const handleSaveFilm = (updatedFilm) => {
+  const handleSaveFilm = (updatedFilm: Film) => {
     setFilms((prevFilms) =>
       prevFilms.map((f) => (f.id === updatedFilm.id ? updatedFilm : f))
     );
-    setSelectedFilm(updatedFilm); 
+    setSelectedFilm(updatedFilm);
   };
 
   const handleBackFromDetail = () => {
     setSelectedFilm(null);
   };
 
-  const handleAddFilm = (newFilm) => {
+  const handleAddFilm = (newFilm: Film) => {
     setFilms((prevFilms) => [...prevFilms, newFilm]);
-    setShowForm(false); 
+    setShowForm(false);
   };
 
-  const getUserNameById = (userId) => {
+  const getUserNameById = (userId: string) => {
     if (!users || users.length === 0) return "Anonim";
     const user = users.find((user) => user.id === userId);
     return user ? user.name : "Anonim";
@@ -807,7 +824,7 @@ const ManageFilm = () => {
           </div>
 
           {filteredFilms.length === 0 && (
-            <Alert variant="warning" className="mb-4">
+            <Alert variant="destructive" className="mb-4">
               Tidak ada film untuk ditampilkan.
             </Alert>
           )}

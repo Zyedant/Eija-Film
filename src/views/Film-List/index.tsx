@@ -3,17 +3,33 @@ import { useRouter } from "next/router";
 import { FaFilter } from "react-icons/fa";
 import Link from "next/link";
 
+interface Genre {
+  name: string;
+}
+
+interface Film {
+  id: number;
+  title: string;
+  description: string;
+  posterUrl: string;
+  category: string;
+  releaseYear: number;
+  duration: number;
+  genreRelations: { genre: Genre }[];
+  slug: string;
+}
+
 const FilmList = () => {
-  const [films, setFilms] = useState([]);
-  const [filteredFilms, setFilteredFilms] = useState([]);
-  const [genres, setGenres] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [releaseYears, setReleaseYears] = useState([]);
-  const [selectedGenre, setSelectedGenre] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedReleaseYear, setSelectedReleaseYear] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [films, setFilms] = useState<Film[]>([]); 
+  const [filteredFilms, setFilteredFilms] = useState<Film[]>([]); 
+  const [genres, setGenres] = useState<string[]>([]); 
+  const [categories, setCategories] = useState<string[]>([]); 
+  const [releaseYears, setReleaseYears] = useState<number[]>([]); 
+  const [selectedGenre, setSelectedGenre] = useState<string>(""); 
+  const [selectedCategory, setSelectedCategory] = useState<string>(""); 
+  const [selectedReleaseYear, setSelectedReleaseYear] = useState<string>(""); 
+  const [isLoading, setIsLoading] = useState<boolean>(true); 
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false); 
 
   const router = useRouter();
 
@@ -23,11 +39,11 @@ const FilmList = () => {
 
       try {
         const response = await fetch("/api/film");
-        const data = await response.json();
-        console.log(data); 
+        const data: Film[] = await response.json();
+        console.log(data);
         setFilms(data);
         setFilteredFilms(data);
-        
+
         const allGenres = [
           ...new Set(
             data.flatMap((film) =>
@@ -35,11 +51,11 @@ const FilmList = () => {
             )
           ),
         ];
-        
+
         const allCategories = [...new Set(data.map((film) => film.category))];
-        
+
         const allReleaseYears = [...new Set(data.map((film) => film.releaseYear))];
-        
+
         setGenres(allGenres);
         setCategories(allCategories);
         setReleaseYears(allReleaseYears);
@@ -55,7 +71,7 @@ const FilmList = () => {
 
   const handleFilterChange = () => {
     let filtered = films;
-    
+
     if (selectedGenre) {
       filtered = filtered.filter((film) =>
         film.genreRelations.some((relation) => relation.genre.name === selectedGenre)
@@ -65,13 +81,13 @@ const FilmList = () => {
     if (selectedCategory) {
       filtered = filtered.filter((film) => film.category === selectedCategory);
     }
-    
+
     if (selectedReleaseYear) {
       filtered = filtered.filter(
         (film) => film.releaseYear === Number(selectedReleaseYear)
       );
     }
-    
+
     setFilteredFilms(filtered);
   };
 
@@ -79,7 +95,7 @@ const FilmList = () => {
     setSelectedGenre("");
     setSelectedCategory("");
     setSelectedReleaseYear("");
-    setFilteredFilms(films); 
+    setFilteredFilms(films);
   };
 
   const toggleFilter = () => {

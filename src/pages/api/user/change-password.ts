@@ -4,7 +4,6 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
-
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 function getUserIdFromToken(req: NextApiRequest): string | null {
@@ -67,8 +66,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     return res.status(200).json({ message: 'Password updated successfully' });
-  } catch (error) {
-    console.error('Error changing password:', error.message);
-    return res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Error changing password:', error.message);
+      return res.status(500).json({ error: 'Internal Server Error', message: error.message });
+    } else {
+      console.error('Unknown error:', error);
+      return res.status(500).json({ error: 'Internal Server Error', message: 'An unexpected error occurred' });
+    }
   }
 }

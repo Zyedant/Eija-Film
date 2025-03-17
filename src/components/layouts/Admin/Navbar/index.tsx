@@ -3,7 +3,7 @@ import { FaSearch, FaMoon, FaSun, FaUserCircle, FaChevronDown } from "react-icon
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/router";
 import Cookies from "js-cookie";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import Link from "next/link";
 
 const Navbar = () => {
@@ -12,9 +12,9 @@ const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const [userImage, setUserImage] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
-  const profileRef = useRef(null);
+  const profileRef = useRef<HTMLDivElement | null>(null); 
 
   useEffect(() => {
     const savedTheme = Cookies.get("theme");
@@ -29,8 +29,8 @@ const Navbar = () => {
     const token = Cookies.get("token");
     const isLoggedIn = Cookies.get("isLoggedIn");
     if (token && isLoggedIn === "true") {
-      const decoded = jwt.decode(token);
-      const userId = decoded?.id || Cookies.get("userId");
+      const decoded = jwt.decode(token) as JwtPayload | string;  
+      const userId = typeof decoded === "string" ? null : decoded?.id;  
 
       if (userId) {
         fetchUserData(userId);
@@ -39,8 +39,8 @@ const Navbar = () => {
       }
     }
 
-    const handleClickOutside = (event) => {
-      if (profileRef.current && !profileRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
       }
     };
@@ -51,7 +51,7 @@ const Navbar = () => {
     };
   }, []);
 
-  const fetchUserData = async (userId) => {
+  const fetchUserData = async (userId: string) => {
     try {
       const response = await fetch(`/api/user/${userId}`, {
         headers: {
@@ -83,7 +83,7 @@ const Navbar = () => {
     }
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
   
@@ -115,7 +115,7 @@ const Navbar = () => {
     if (response.ok) {
       Cookies.remove("token");
       Cookies.remove("isLoggedIn");
-      Cookies.remove("userId"); 
+      Cookies.remove("userId");
 
       router.push("/auth/login");
     } else {
@@ -153,9 +153,7 @@ const Navbar = () => {
         <div className="relative" ref={profileRef}>
           <button
             onClick={toggleProfileDropdown}
-            className={`flex items-center space-x-2 ${
-              isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
-            } p-2 rounded-full transition duration-200`}
+            className={`flex items-center space-x-2 ${isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"} p-2 rounded-full transition duration-200`}
           >
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-500 shadow-md">
               {userImage ? (
@@ -165,54 +163,36 @@ const Navbar = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className={`w-full h-full flex items-center justify-center ${
-                  isDarkMode ? "bg-gray-700" : "bg-gray-200"
-                }`}>
-                  <FaUserCircle size={32} className={`${
-                    isDarkMode ? "text-gray-400" : "text-gray-600"
-                  }`} />
+                <div className={`w-full h-full flex items-center justify-center ${isDarkMode ? "bg-gray-700" : "bg-gray-200"}`}>
+                  <FaUserCircle size={32} className={`${isDarkMode ? "text-gray-400" : "text-gray-600"}`} />
                 </div>
               )}
             </div>
-            <FaChevronDown className={`${
-              isDarkMode ? "text-gray-400" : "text-gray-600"
-            } ${isProfileOpen ? "transform rotate-180" : ""} transition-transform duration-200`} />
+            <FaChevronDown className={`${isDarkMode ? "text-gray-400" : "text-gray-600"} ${isProfileOpen ? "transform rotate-180" : ""} transition-transform duration-200`} />
           </button>
 
           {isProfileOpen && (
-            <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${
-              isDarkMode ? "bg-gray-800" : "bg-white"
-            } ring-1 ring-black ring-opacity-5 py-1 z-20`}>
-              <div className={`px-4 py-3 border-b ${
-                isDarkMode ? "border-gray-700" : "border-gray-200"
-              }`}>
-                <p className={`font-medium ${
-                  isDarkMode ? "text-gray-200" : "text-gray-800"
-                }`}>{userName || "User"}</p>
+            <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${isDarkMode ? "bg-gray-800" : "bg-white"} ring-1 ring-black ring-opacity-5 py-1 z-20`}>
+              <div className={`px-4 py-3 border-b ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
+                <p className={`font-medium ${isDarkMode ? "text-gray-200" : "text-gray-800"}`}>{userName || "User"}</p>
               </div>
               <Link
                 href="/profile"
-                className={`block px-4 py-2 text-sm ${
-                  isDarkMode ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
-                } transition duration-150`}
+                className={`block px-4 py-2 text-sm ${isDarkMode ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"} transition duration-150`}
                 onClick={() => setIsProfileOpen(false)}
               >
                 Profile
               </Link>
               <Link
                 href="/"
-                className={`block px-4 py-2 text-sm ${
-                  isDarkMode ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
-                } transition duration-150`}
+                className={`block px-4 py-2 text-sm ${isDarkMode ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"} transition duration-150`}
                 onClick={() => setIsProfileOpen(false)}
               >
                 Dashboard
               </Link>
               <button
                 onClick={openModal} 
-                className={`block w-full text-left px-4 py-2 text-sm ${
-                  isDarkMode ? "text-red-400 hover:bg-gray-700" : "text-red-600 hover:bg-gray-100"
-                } transition duration-150`}
+                className={`block w-full text-left px-4 py-2 text-sm ${isDarkMode ? "text-red-400 hover:bg-gray-700" : "text-red-600 hover:bg-gray-100"} transition duration-150`}
               >
                 Logout
               </button>
@@ -223,16 +203,8 @@ const Navbar = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className={`${
-            isDarkMode ? "bg-gray-800" : "bg-white"
-          } p-8 rounded-lg shadow-xl max-w-md w-full border-2 ${
-            isDarkMode ? "border-yellow-700" : "border-yellow-500"
-          }`}>
-            <h2 className={`text-2xl font-bold mb-4 ${
-              isDarkMode 
-                ? "text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600" 
-                : "text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-yellow-800"
-            }`}>Konfirmasi Logout</h2>
+          <div className={`${isDarkMode ? "bg-gray-800" : "bg-white"} p-8 rounded-lg shadow-xl max-w-md w-full border-2 ${isDarkMode ? "border-yellow-700" : "border-yellow-500"}`}>
+            <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? "text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600" : "text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 to-yellow-800"}`}>Konfirmasi Logout</h2>
             
             <p className={`mb-6 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
               Apakah anda ingin Logout?
@@ -241,21 +213,13 @@ const Navbar = () => {
             <div className="flex justify-end space-x-4">
               <button
                 onClick={closeModal}
-                className={`px-4 py-2 rounded-md border ${
-                  isDarkMode 
-                    ? "border-gray-600 text-gray-300 hover:bg-gray-700" 
-                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                } transition duration-200`}
+                className={`px-4 py-2 rounded-md border ${isDarkMode ? "border-gray-600 text-gray-300 hover:bg-gray-700" : "border-gray-300 text-gray-700 hover:bg-gray-100"} transition duration-200`}
               >
                 Batal
               </button>
               <button
                 onClick={handleLogout}
-                className={`px-4 py-2 rounded-md ${
-                  isDarkMode
-                    ? "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white hover:from-yellow-700 hover:to-yellow-800"
-                    : "bg-gradient-to-r from-yellow-700 to-yellow-800 text-white hover:from-yellow-800 hover:to-yellow-900"
-                } transition duration-200`}
+                className={`px-4 py-2 rounded-md ${isDarkMode ? "bg-gradient-to-r from-yellow-600 to-yellow-700 text-white hover:from-yellow-700 hover:to-yellow-800" : "bg-gradient-to-r from-yellow-700 to-yellow-800 text-white hover:from-yellow-800 hover:to-yellow-900"} transition duration-200`}
               >
                 Logout
               </button>

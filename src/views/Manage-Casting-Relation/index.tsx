@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { FaPlus, FaTrash, FaEdit } from "react-icons/fa";
 import axios from "axios";
-import Cookies from 'js-cookie';
-import jwt from 'jsonwebtoken';
+import Cookies from "js-cookie";
+import jwt from "jsonwebtoken";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert } from "@/components/ui/alert";
@@ -25,12 +25,48 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, castings }) => {
+// Interface untuk tipe data
+interface User {
+  id: string;
+  name: string;
+  role: string;
+}
+
+interface Film {
+  id: string;
+  title: string;
+  userId: string;
+}
+
+interface Casting {
+  id: string;
+  stageName: string;
+}
+
+interface CastingRelation {
+  id: string;
+  filmId: string;
+  castingId: string;
+  role: string;
+  userId: string;
+  film: Film;
+  casting: Casting;
+}
+
+interface CastingRelationFormProps {
+  onSaveRelation: (relation: { filmId: string; castingId: string; role: string }) => void;
+  onCancel: () => void;
+  relationToEdit?: CastingRelation;
+  films: Film[];
+  castings: Casting[];
+}
+
+const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, castings }: CastingRelationFormProps) => {
   const [selectedFilm, setSelectedFilm] = useState(relationToEdit ? relationToEdit.filmId : "");
   const [selectedCasting, setSelectedCasting] = useState(relationToEdit ? relationToEdit.castingId : "");
   const [role, setRole] = useState(relationToEdit ? relationToEdit.role : "");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const token = Cookies.get("token");
@@ -41,7 +77,7 @@ const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, 
     }
 
     try {
-      const decoded = jwt.decode(token);
+      const decoded = jwt.decode(token) as { id: string };
       const userId = decoded.id;
 
       const relationData = {
@@ -50,8 +86,6 @@ const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, 
         role: role,
         userId,
       };
-
-      console.log("Data yang dikirim ke API:", relationData);
 
       if (relationToEdit) {
         await axios.put(`/api/casting-relation/${relationToEdit.id}`, relationData, {
@@ -141,48 +175,46 @@ const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, 
 };
 
 const ManageCastingRelation = () => {
-  const [relations, setRelations] = useState([]);
-  const [films, setFilms] = useState([]);
-  const [castings, setCastings] = useState([]);
+  const [relations, setRelations] = useState<CastingRelation[]>([]);
+  const [films, setFilms] = useState<Film[]>([]);
+  const [castings, setCastings] = useState<Casting[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [relationToEdit, setRelationToEdit] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [relationToEdit, setRelationToEdit] = useState<CastingRelation | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false); 
-  const [relationToDelete, setRelationToDelete] = useState(null); 
-  const [itemsPerPage, setItemsPerPage] = useState(10); 
-  const [currentPage, setCurrentPage] = useState(1); 
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [relationToDelete, setRelationToDelete] = useState<string | null>(null);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
 
-  
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const token = Cookies.get('token');
+        const token = Cookies.get("token");
         if (!token) {
-          router.push('/login');
+          router.push("/login");
           return;
         }
 
-        const decoded = jwt.decode(token);
+        const decoded = jwt.decode(token) as { id: string; role: string };
         if (!decoded) {
-          router.push('/login');
+          router.push("/login");
           return;
         }
 
-        setCurrentUser(decoded);
-        setIsAdmin(decoded.role === 'ADMIN');
+        setCurrentUser({ id: decoded.id, name: "", role: decoded.role });
+        setIsAdmin(decoded.role === "ADMIN");
       } catch (error) {
         console.error("Failed to decode token", error);
-        router.push('/login');
+        router.push("/login");
       }
     };
 
     fetchUserData();
   }, [router]);
 
-  
   useEffect(() => {
     if (!currentUser) return;
 
@@ -191,22 +223,19 @@ const ManageCastingRelation = () => {
         setLoading(true);
         const token = Cookies.get("token");
 
-        
         const filmResponse = await axios.get("/api/film", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        
         if (isAdmin) {
           setFilms(filmResponse.data);
         } else {
-          const userFilms = filmResponse.data.filter(film => film.userId === currentUser.id);
+          const userFilms = filmResponse.data.filter((film: Film) => film.userId === currentUser.id);
           setFilms(userFilms);
         }
 
-        
         const castingResponse = await axios.get("/api/casting", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -214,22 +243,20 @@ const ManageCastingRelation = () => {
         });
         setCastings(castingResponse.data);
 
-        
         const relationResponse = await axios.get("/api/casting-relation", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        
         if (isAdmin) {
           setRelations(relationResponse.data);
         } else {
           const authorFilmIds = filmResponse.data
-            .filter(film => film.userId === currentUser.id)
-            .map(film => film.id);
+            .filter((film: Film) => film.userId === currentUser.id)
+            .map((film) => film.id);
 
-          const authorRelations = relationResponse.data.filter(relation => 
+          const authorRelations = relationResponse.data.filter((relation: CastingRelation) =>
             authorFilmIds.includes(relation.filmId)
           );
 
@@ -246,20 +273,19 @@ const ManageCastingRelation = () => {
     fetchData();
   }, [currentUser, isAdmin]);
 
-  
   const totalItems = relations.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentRelations = relations.slice(startIndex, endIndex);
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (value) => {
+  const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(Number(value));
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleDeleteRelation = async () => {
@@ -269,11 +295,11 @@ const ManageCastingRelation = () => {
       const token = Cookies.get("token");
 
       if (!isAdmin) {
-        const relationToDeleteCheck = relations.find(relation => relation.id === relationToDelete);
+        const relationToDeleteCheck = relations.find((relation) => relation.id === relationToDelete);
         if (!relationToDeleteCheck) return;
 
-        const filmIsOwnedByUser = films.some(film => 
-          film.id === relationToDeleteCheck.filmId && film.userId === currentUser.id
+        const filmIsOwnedByUser = films.some(
+          (film) => film.id === relationToDeleteCheck.filmId && film.userId === currentUser?.id
         );
 
         if (!filmIsOwnedByUser) {
@@ -288,16 +314,16 @@ const ManageCastingRelation = () => {
         },
       });
       setRelations((prevRelations) => prevRelations.filter((relation) => relation.id !== relationToDelete));
-      setShowDeleteDialog(false); 
+      setShowDeleteDialog(false);
     } catch (error) {
       console.error("Gagal menghapus casting relation", error);
     }
   };
 
-  const handleEditRelation = (relation) => {
+  const handleEditRelation = (relation: CastingRelation) => {
     if (!isAdmin) {
-      const filmIsOwnedByUser = films.some(film => 
-        film.id === relation.filmId && film.userId === currentUser.id
+      const filmIsOwnedByUser = films.some(
+        (film) => film.id === relation.filmId && film.userId === currentUser?.id
       );
 
       if (!filmIsOwnedByUser) {
@@ -310,10 +336,12 @@ const ManageCastingRelation = () => {
     setShowForm(true);
   };
 
-  const handleSaveRelation = (newRelation) => {
+  const handleSaveRelation = (newRelation: { filmId: string; castingId: string; role: string }) => {
     if (relationToEdit) {
       setRelations((prevRelations) =>
-        prevRelations.map((r) => (r.id === relationToEdit.id ? { ...r, ...newRelation } : r))
+        prevRelations.map((r) =>
+          r.id === relationToEdit.id ? { ...r, ...newRelation } : r
+        )
       );
     } else {
       setTimeout(() => {
@@ -338,7 +366,7 @@ const ManageCastingRelation = () => {
         <CastingRelationForm
           onSaveRelation={handleSaveRelation}
           onCancel={() => setShowForm(false)}
-          relationToEdit={relationToEdit}
+          relationToEdit={relationToEdit || undefined}
           films={films}
           castings={castings}
         />
@@ -356,7 +384,7 @@ const ManageCastingRelation = () => {
           </div>
 
           {relations.length === 0 && (
-            <Alert variant="warning" className="mb-4">
+            <Alert variant="destructive" className="mb-4">
               Tidak ada casting relation untuk ditampilkan.
             </Alert>
           )}
@@ -375,18 +403,9 @@ const ManageCastingRelation = () => {
               <TableBody>
                 {currentRelations.map((relation) => (
                   <TableRow key={relation.id} className="dark:text-white text-black">
-                    <TableCell className="py-3 px-4">
-                      {relation.film.title}
-                    </TableCell>
-
-                    <TableCell className="py-3 px-4">
-                      {relation.casting.stageName}
-                    </TableCell>
-
-                    <TableCell className="py-3 px-4">
-                      {relation.role}
-                    </TableCell>
-
+                    <TableCell className="py-3 px-4">{relation.film.title}</TableCell>
+                    <TableCell className="py-3 px-4">{relation.casting.stageName}</TableCell>
+                    <TableCell className="py-3 px-4">{relation.role}</TableCell>
                     <TableCell className="py-3 px-4">
                       <Button onClick={() => handleEditRelation(relation)} className="bg-yellow-500 text-white mr-2">
                         <FaEdit />

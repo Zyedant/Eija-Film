@@ -23,19 +23,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox"; 
+import { Checkbox } from "@/components/ui/checkbox";
 
+interface Genre {
+  id: string;
+  name: string;
+}
 
-const GenreRelationForm = ({ onSaveGenreRelation, onCancel, filmId, existingGenres }) => {
-  const [selectedGenres, setSelectedGenres] = useState(existingGenres || []); 
-  const [availableGenres, setAvailableGenres] = useState([]);
+interface GenreRelation {
+  filmId: string;
+  genreId: string;
+  film: {
+    id: string;
+    title: string;
+  };
+  genre: {
+    id: string;
+    name: string;
+  };
+}
+
+interface Film {
+  id: string;
+  title: string;
+}
+
+interface GenreRelationFormProps {
+  onSaveGenreRelation: () => void;
+  onCancel: () => void;
+  filmId: string;
+  existingGenres: string[];
+}
+
+const GenreRelationForm: React.FC<GenreRelationFormProps> = ({ onSaveGenreRelation, onCancel, filmId, existingGenres }) => {
+  const [selectedGenres, setSelectedGenres] = useState<string[]>(existingGenres || []);
+  const [availableGenres, setAvailableGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAllGenres = async () => {
       try {
         const token = Cookies.get('token');
-        const response = await axios.get("/api/genre", {
+        const response = await axios.get<Genre[]>("/api/genre", {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -52,7 +81,7 @@ const GenreRelationForm = ({ onSaveGenreRelation, onCancel, filmId, existingGenr
     fetchAllGenres();
   }, []);
 
-  const handleGenreToggle = (genreId) => {
+  const handleGenreToggle = (genreId: string) => {
     if (selectedGenres.includes(genreId)) {
       setSelectedGenres(selectedGenres.filter(id => id !== genreId));
     } else {
@@ -60,7 +89,7 @@ const GenreRelationForm = ({ onSaveGenreRelation, onCancel, filmId, existingGenr
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const token = Cookies.get('token');
@@ -149,113 +178,14 @@ const GenreRelationForm = ({ onSaveGenreRelation, onCancel, filmId, existingGenr
   );
 };
 
-
-const AddGenreToFilm = ({ filmId, onGenreAdded }) => {
-  const [availableGenres, setAvailableGenres] = useState([]);
-  const [selectedGenreIds, setSelectedGenreIds] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchGenres = async () => {
-      try {
-        const token = Cookies.get('token');
-        const response = await axios.get("/api/genre", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setAvailableGenres(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Gagal mengambil data genre", error);
-        setLoading(false);
-      }
-    };
-
-    fetchGenres();
-  }, []);
-
-  const handleAddGenre = async () => {
-    if (selectedGenreIds.length === 0) return;
-
-    try {
-      const token = Cookies.get('token');
-      await axios.post("/api/genre-relation", 
-        { 
-          filmId, 
-          genreId: selectedGenreIds
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      
-      if (onGenreAdded) {
-        onGenreAdded();
-      }
-      
-      setSelectedGenreIds([]);
-    } catch (error) {
-      console.error("Gagal menambahkan genre ke film", error);
-    }
-  };
-
-  const handleGenreToggle = (genreId) => {
-    if (selectedGenreIds.includes(genreId)) {
-      setSelectedGenreIds(selectedGenreIds.filter(id => id !== genreId));
-    } else {
-      setSelectedGenreIds([...selectedGenreIds, genreId]);
-    }
-  };
-
-  if (loading) {
-    return <p>Memuat genre...</p>;
-  }
-
-  return (
-    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
-      <h3 className="text-lg font-medium mb-3">Tambah Genre ke Film</h3>
-      
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {availableGenres.map((genre) => (
-          <div key={genre.id} className="flex items-center space-x-2">
-            <Checkbox
-              id={`genre-${genre.id}`}
-              checked={selectedGenreIds.includes(genre.id)}
-              onCheckedChange={() => handleGenreToggle(genre.id)}
-            />
-            <label
-              htmlFor={`genre-${genre.id}`}
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              {genre.name}
-            </label>
-          </div>
-        ))}
-      </div>
-
-      <Button 
-        onClick={handleAddGenre}
-        disabled={selectedGenreIds.length === 0}
-        className="mt-4 bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white"
-      >
-        Tambahkan Genre
-      </Button>
-    </div>
-  );
-};
-
-
 const ManageGenreRelation = () => {
-  const [genreRelations, setGenreRelations] = useState([]);
+  const [genreRelations, setGenreRelations] = useState<GenreRelation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [selectedFilm, setSelectedFilm] = useState(null);
-  const [films, setFilms] = useState([]);
+  const [selectedFilm, setSelectedFilm] = useState<Film | null>(null);
+  const [films, setFilms] = useState<Film[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [relationToDelete, setRelationToDelete] = useState(null);
+  const [relationToDelete, setRelationToDelete] = useState<{ filmId: string; genreId: string } | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
@@ -267,8 +197,7 @@ const ManageGenreRelation = () => {
       try {
         const token = Cookies.get('token');
         
-        
-        const filmsResponse = await axios.get("/api/film", {
+        const filmsResponse = await axios.get<Film[]>("/api/film", {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -276,8 +205,7 @@ const ManageGenreRelation = () => {
         
         setFilms(filmsResponse.data);
 
-        
-        const relationsResponse = await axios.get("/api/genre-relation", {
+        const relationsResponse = await axios.get<GenreRelation[]>("/api/genre-relation", {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -294,7 +222,6 @@ const ManageGenreRelation = () => {
     fetchData();
   }, []);
 
-  
   const groupedRelations = genreRelations.reduce((acc, relation) => {
     if (!acc[relation.filmId]) {
       acc[relation.filmId] = {
@@ -305,33 +232,34 @@ const ManageGenreRelation = () => {
     
     acc[relation.filmId].genres.push(relation.genre);
     return acc;
-  }, {});
+  }, {} as Record<string, { film: Film; genres: Genre[] }>);
 
-  
   const filmsWithGenres = Object.values(groupedRelations);
 
-  
   const filteredFilmsWithGenres = filmsWithGenres.filter(
-    (item) => item.film.title.toLowerCase().includes((search || "").toLowerCase())
+    (item) => {
+      const searchString = Array.isArray(search) ? search.join(' ') : search; 
+      return item.film.title.toLowerCase().includes((searchString || "").toLowerCase());
+    }
   );
-
   
+
   const totalItems = filteredFilmsWithGenres.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentFilmsWithGenres = filteredFilmsWithGenres.slice(startIndex, endIndex);
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (value) => {
+  const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(Number(value));
     setCurrentPage(1);
   };
 
-  const handleManageGenres = (film) => {
+  const handleManageGenres = (film: Film) => {
     const existingGenres = genreRelations
       .filter((relation) => relation.filmId === film.id)
       .map((relation) => relation.genre.id);
@@ -339,7 +267,6 @@ const ManageGenreRelation = () => {
     setSelectedFilm({
       id: film.id,
       title: film.title,
-      genres: existingGenres, 
     });
     setShowForm(true);
   };
@@ -353,8 +280,7 @@ const ManageGenreRelation = () => {
     try {
       const token = Cookies.get('token');
       
-      
-      const relationsResponse = await axios.get("/api/genre-relation", {
+      const relationsResponse = await axios.get<GenreRelation[]>("/api/genre-relation", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -379,8 +305,7 @@ const ManageGenreRelation = () => {
         }
       });
       
-      
-      const relationsResponse = await axios.get("/api/genre-relation", {
+      const relationsResponse = await axios.get<GenreRelation[]>("/api/genre-relation", {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -395,12 +320,14 @@ const ManageGenreRelation = () => {
 
   return (
     <main className="bg-gray-100 dark:bg-gray-800 p-6 overflow-x-auto">
-      {showForm ? (
+      {showForm && selectedFilm ? (
         <GenreRelationForm 
           onSaveGenreRelation={handleSaveGenreRelation} 
           onCancel={handleCancelEdit} 
           filmId={selectedFilm.id}
-          existingGenres={selectedFilm.genres || []}
+          existingGenres={genreRelations
+            .filter((relation) => relation.filmId === selectedFilm.id)
+            .map((relation) => relation.genre.id)}
         />
       ) : (
         <>
@@ -413,7 +340,7 @@ const ManageGenreRelation = () => {
                 onValueChange={(value) => {
                   const film = films.find(f => f.id === value);
                   if (film) {
-                    handleManageGenres({id: film.id, title: film.title});
+                    handleManageGenres(film);
                   }
                 }}
               >
@@ -434,7 +361,7 @@ const ManageGenreRelation = () => {
           ) : (
             <>
               {filteredFilmsWithGenres.length === 0 && (
-                <Alert variant="warning" className="mb-4">
+                <Alert variant="destructive" className="mb-4">
                   Tidak ada genre relation untuk ditampilkan.
                 </Alert>
               )}
@@ -510,13 +437,6 @@ const ManageGenreRelation = () => {
                   </Button>
                 </div>
               </div>
-
-              {selectedFilm && (
-                <AddGenreToFilm 
-                  filmId={selectedFilm.id} 
-                  onGenreAdded={handleSaveGenreRelation} 
-                />
-              )}
             </>
           )}
 

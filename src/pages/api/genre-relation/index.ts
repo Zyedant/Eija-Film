@@ -90,9 +90,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         );
 
         return res.status(201).json(newGenreRelations);
-      } catch (error) {
-        console.error('Error creating genre relations:', error);
-        return res.status(500).json({ error: error.message });
+      } catch (error: unknown) { 
+        if (error instanceof Error) {
+          console.error('Error creating genre relations:', error.message);
+          return res.status(500).json({ error: error.message });
+        } else {
+          console.error('Unknown error creating genre relations:', error);
+          return res.status(500).json({ error: 'Internal Server Error' });
+        }
       }
     }
 
@@ -128,18 +133,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         );
 
         return res.status(200).json(updatedGenreRelations);
-      } catch (error) {
-        console.error('Error updating genre relations:', error);
-        return res.status(500).json({ error: error.message });
+      } catch (error: unknown) { 
+        if (error instanceof Error) {
+          console.error('Error updating genre relations:', error.message);
+          return res.status(500).json({ error: error.message });
+        } else {
+          console.error('Unknown error updating genre relations:', error);
+          return res.status(500).json({ error: 'Internal Server Error' });
+        }
       }
     }
 
     return res.status(405).json({ error: 'Method Not Allowed' });
-  } catch (error) {
-    console.error('Error handling API request:', error.message);
-    return res.status(500).json({
-      error: 'Internal Server Error',
-      message: error.message || 'Terjadi kesalahan tak terduga',
-    });
+  } catch (error: unknown) { 
+    if (error instanceof Error) {
+      console.error('Error handling API request:', error.message);
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: error.message || 'Terjadi kesalahan tak terduga',
+      });
+    } else {
+      console.error('Unknown error handling API request:', error);
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'Terjadi kesalahan tak terduga',
+      });
+    }
   }
 }

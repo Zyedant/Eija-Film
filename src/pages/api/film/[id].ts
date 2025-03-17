@@ -52,11 +52,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === 'PUT') {
       const { title, description, posterUrl, trailerUrl, duration, releaseYear, category, episode } = req.body;
-    
+
       if ((category === 'SERIES' || category === 'ANIME') && (!episode || episode <= 0)) {
         return res.status(400).json({ error: 'Episode is required for SERIES or ANIME' });
       }
-    
+
       const updatedFilm = await prisma.film.update({
         where: { id: String(id) },
         data: {
@@ -81,8 +81,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(405).json({ error: 'Method Not Allowed' });
-  } catch (error) {
-    console.error('Error handling API request:', error);
-    return res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Error handling API request:', error.message);
+      return res.status(500).json({
+        error: 'Internal Server Error',
+        message: error.message || 'An unexpected error occurred',
+      });
+    }
+
+    console.error('Unknown error', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
   }
 }
