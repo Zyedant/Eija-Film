@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// Fungsi untuk mengambil user ID dari token JWT
 function getUserIdFromToken(req: NextApiRequest): string | null {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
@@ -35,7 +34,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // GET: Mengambil semua genre relations
     if (req.method === 'GET') {
       const genreRelations = await prisma.genreRelation.findMany({
         include: {
@@ -56,7 +54,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(genreRelations);
     }
 
-    // POST: Menambahkan GenreRelation baru
     if (req.method === 'POST') {
       const { filmId, genreId } = req.body;
 
@@ -64,7 +61,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Film ID dan Genre ID (sebagai array) diperlukan' });
       }
 
-      // Validasi apakah filmId ada di database
       const film = await prisma.film.findUnique({
         where: { id: filmId },
       });
@@ -73,11 +69,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ error: `Film dengan ID ${filmId} tidak ditemukan.` });
       }
 
-      // Menambahkan genre relation satu per satu
       try {
         const newGenreRelations = await Promise.all(
           genreId.map(async (id) => {
-            // Validasi apakah genreId ada di database
             const genre = await prisma.genre.findUnique({
               where: { id },
             });
@@ -86,7 +80,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               throw new Error(`Genre dengan ID ${id} tidak ditemukan.`);
             }
 
-            // Menambahkan GenreRelation
             return prisma.genreRelation.create({
               data: {
                 filmId,
@@ -103,7 +96,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // PUT: Mengupdate GenreRelation
     if (req.method === 'PUT') {
       const { filmId, genreId } = req.body;
 
@@ -112,12 +104,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       try {
-        // Hapus semua relasi genre untuk film ini
         await prisma.genreRelation.deleteMany({
           where: { filmId },
         });
 
-        // Tambahkan relasi genre baru
         const updatedGenreRelations = await Promise.all(
           genreId.map(async (id) => {
             const genre = await prisma.genre.findUnique({
@@ -144,7 +134,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Untuk metode lain seperti DELETE, kembalikan 405
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (error) {
     console.error('Error handling API request:', error.message);

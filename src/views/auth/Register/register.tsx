@@ -9,7 +9,6 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Check theme preference from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {

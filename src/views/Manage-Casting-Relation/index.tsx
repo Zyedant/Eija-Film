@@ -81,7 +81,6 @@ const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, 
       </div>
 
       <form onSubmit={handleSubmit}>
-        {/* Pilih Film */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Pilih Film</label>
           <select
@@ -99,7 +98,6 @@ const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, 
           </select>
         </div>
 
-        {/* Pilih Casting */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Pilih Casting</label>
           <select
@@ -117,7 +115,6 @@ const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, 
           </select>
         </div>
 
-        {/* Input Role */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
           <input
@@ -130,7 +127,6 @@ const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, 
           />
         </div>
 
-        {/* Tombol Aksi */}
         <div className="flex justify-between mt-4">
           <Button type="submit" className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white">
             {relationToEdit ? "Perbarui Relation" : "Tambah Relation"}
@@ -153,13 +149,13 @@ const ManageCastingRelation = () => {
   const [relationToEdit, setRelationToEdit] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false); // State untuk pop-up hapus
-  const [relationToDelete, setRelationToDelete] = useState(null); // State untuk relation yang akan dihapus
-  const [itemsPerPage, setItemsPerPage] = useState(10); // State untuk jumlah data per halaman
-  const [currentPage, setCurrentPage] = useState(1); // State untuk halaman saat ini
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false); 
+  const [relationToDelete, setRelationToDelete] = useState(null); 
+  const [itemsPerPage, setItemsPerPage] = useState(10); 
+  const [currentPage, setCurrentPage] = useState(1); 
   const router = useRouter();
 
-  // Fetch current user data and check if admin
+  
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -186,7 +182,7 @@ const ManageCastingRelation = () => {
     fetchUserData();
   }, [router]);
 
-  // Fetch data after we have user info
+  
   useEffect(() => {
     if (!currentUser) return;
 
@@ -195,14 +191,14 @@ const ManageCastingRelation = () => {
         setLoading(true);
         const token = Cookies.get("token");
 
-        // Fetch all films
+        
         const filmResponse = await axios.get("/api/film", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        // Filter films based on user role
+        
         if (isAdmin) {
           setFilms(filmResponse.data);
         } else {
@@ -210,7 +206,7 @@ const ManageCastingRelation = () => {
           setFilms(userFilms);
         }
 
-        // Fetch all castings
+        
         const castingResponse = await axios.get("/api/casting", {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -218,14 +214,14 @@ const ManageCastingRelation = () => {
         });
         setCastings(castingResponse.data);
 
-        // Fetch all casting relations
+        
         const relationResponse = await axios.get("/api/casting-relation", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
-        // Filter relations based on user role
+        
         if (isAdmin) {
           setRelations(relationResponse.data);
         } else {
@@ -250,7 +246,7 @@ const ManageCastingRelation = () => {
     fetchData();
   }, [currentUser, isAdmin]);
 
-  // Pagination Logic
+  
   const totalItems = relations.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -263,7 +259,7 @@ const ManageCastingRelation = () => {
 
   const handleItemsPerPageChange = (value) => {
     setItemsPerPage(Number(value));
-    setCurrentPage(1); // Reset ke halaman pertama saat mengubah jumlah data per halaman
+    setCurrentPage(1); 
   };
 
   const handleDeleteRelation = async () => {
@@ -292,7 +288,7 @@ const ManageCastingRelation = () => {
         },
       });
       setRelations((prevRelations) => prevRelations.filter((relation) => relation.id !== relationToDelete));
-      setShowDeleteDialog(false); // Tutup pop-up setelah berhasil menghapus
+      setShowDeleteDialog(false); 
     } catch (error) {
       console.error("Gagal menghapus casting relation", error);
     }
@@ -411,7 +407,6 @@ const ManageCastingRelation = () => {
             </Table>
           </div>
 
-          {/* Pagination dan Select Jumlah Data per Halaman */}
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
@@ -449,7 +444,6 @@ const ManageCastingRelation = () => {
         </>
       )}
 
-      {/* Pop-up Konfirmasi Hapus */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <AlertDialogHeader>

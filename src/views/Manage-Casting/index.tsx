@@ -39,10 +39,10 @@ const ManageCasting = () => {
   const [castingToDelete, setCastingToDelete] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState(''); // State untuk query pencarian
+  const [searchQuery, setSearchQuery] = useState(''); 
   const router = useRouter();
 
-  // Fetch data on load
+  
   useEffect(() => {
     const fetchCastings = async () => {
       try {
@@ -62,14 +62,12 @@ const ManageCasting = () => {
     fetchCastings();
   }, []);
 
-  // Filter castings based on search query
   const filteredCastings = castings.filter(
     (casting) =>
       casting.realName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       casting.stageName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Pagination logic
   const totalItems = filteredCastings.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -85,7 +83,7 @@ const ManageCasting = () => {
     setCurrentPage(1);
   };
 
-  // Handle form submission for adding or editing casting
+  
   const handleSaveCasting = async () => {
     if (!realName || (!photoUrl && !actorPhotoFile) || !stageName) {
       setErrorMessage("Real Name, Stage Name, and Photo (URL or File) are required");
@@ -93,13 +91,13 @@ const ManageCasting = () => {
     }
 
     setIsLoading(true);
-    setErrorMessage(""); // Reset error message
+    setErrorMessage(""); 
 
     try {
       const token = Cookies.get('token');
       let uploadedPhotoUrl = photoUrl;
 
-      // Jika ada file gambar yang di-upload
+      
       if (actorPhotoFile) {
         const formData = new FormData();
         formData.append("file", actorPhotoFile);
@@ -118,7 +116,7 @@ const ManageCasting = () => {
       let response;
 
       if (editCastingId) {
-        // Editing an existing casting
+        
         response = await axios.put(`/api/casting/${editCastingId}`, castingData, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -126,7 +124,7 @@ const ManageCasting = () => {
         });
         setCastings(castings.map((casting) => (casting.id === editCastingId ? response.data : casting)));
       } else {
-        // Adding a new casting
+        
         response = await axios.post("/api/casting", castingData, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -135,7 +133,7 @@ const ManageCasting = () => {
         setCastings((prev) => [...prev, response.data]);
       }
 
-      // Reset form fields after submission
+      
       setRealName('');
       setPhotoUrl('');
       setStageName('');
@@ -150,7 +148,7 @@ const ManageCasting = () => {
     }
   };
 
-  // Handle deletion of a casting
+  
   const handleDeleteCasting = async () => {
     if (!castingToDelete) return;
 
@@ -172,7 +170,7 @@ const ManageCasting = () => {
     }
   };
 
-  // Handle edit casting
+  
   const handleEditCasting = (casting: any) => {
     setRealName(casting.realName);
     setPhotoUrl(casting.photoUrl);
@@ -181,7 +179,7 @@ const ManageCasting = () => {
     setShowForm(true);
   };
 
-  // Handle cancel edit or add
+  
   const handleCancel = () => {
     setShowForm(false);
     setEditCastingId(null);
@@ -191,7 +189,7 @@ const ManageCasting = () => {
     setActorPhotoFile(null);
   };
 
-  // Handle file change for photo upload
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files ? e.target.files[0] : null;
     if (file) {
@@ -206,10 +204,8 @@ const ManageCasting = () => {
           <h2 className="text-2xl font-semibold text-yellow-500 mb-4">
             {editCastingId ? "Edit Casting" : "Add New Casting"}
           </h2>
-          {/* Error Message */}
           {errorMessage && <Alert variant="warning" className="mb-4">{errorMessage}</Alert>}
 
-          {/* Form for Add/Edit Casting */}
           <div className="space-y-4">
             <input
               type="text"
@@ -228,7 +224,6 @@ const ManageCasting = () => {
               required
             />
 
-            {/* Pilihan antara URL atau Upload File */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Photo Upload Method
@@ -289,7 +284,6 @@ const ManageCasting = () => {
             </Button>
           </div>
 
-          {/* Error Message */}
           {errorMessage && <Alert variant="warning" className="mb-4">{errorMessage}</Alert>}
 
           <div className="overflow-x-auto border border-gray-300 dark:border-gray-700 rounded-lg">
@@ -345,7 +339,6 @@ const ManageCasting = () => {
             </Table>
           </div>
 
-          {/* Pagination and Items Per Page Selector */}
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">Show</span>
@@ -383,7 +376,6 @@ const ManageCasting = () => {
         </>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <AlertDialogHeader>

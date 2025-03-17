@@ -10,7 +10,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Check theme preference from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
@@ -23,7 +22,7 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(""); // Reset previous error
+    setError("");
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -41,7 +40,6 @@ const Login = () => {
         Cookies.set("role", data.user.role, { expires: 1 });
         Cookies.set("isLoggedIn", "true", { expires: 1 });
 
-        // Redirect based on the role
         if (data.user.role === "ADMIN") {
           router.push("/admin");
         } else if (data.user.role === "AUTHOR") {
@@ -50,7 +48,6 @@ const Login = () => {
           router.push("/");
         }
       } else {
-        // Tampilkan pesan error dari backend
         setError(data.message || "Invalid email or password");
       }
     } catch (err) {

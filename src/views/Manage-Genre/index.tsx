@@ -31,14 +31,14 @@ const GenreForm = ({ onSaveGenre, onCancel, genreToEdit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const token = Cookies.get('token'); // Ambil token dari cookie
+    const token = Cookies.get('token'); 
     
     if (!token) {
       console.error("User tidak ditemukan atau belum login.");
       return;
     }
   
-    // Decode token untuk mendapatkan userId
+    
     try {
       const decoded = jwt.decode(token);
       const userId = decoded.id;
@@ -53,13 +53,13 @@ const GenreForm = ({ onSaveGenre, onCancel, genreToEdit }) => {
         if (genreToEdit) {
           await axios.put(`/api/genre/${genreToEdit.id}`, updatedGenre, {
             headers: {
-              Authorization: `Bearer ${token}` // Tambahkan token ke header
+              Authorization: `Bearer ${token}` 
             }
           });
         } else {
           await axios.post("/api/genre", updatedGenre, {
             headers: {
-              Authorization: `Bearer ${token}` // Tambahkan token ke header
+              Authorization: `Bearer ${token}` 
             }
           });
         }
@@ -108,10 +108,10 @@ const ManageGenre = () => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [genreToEdit, setGenreToEdit] = useState(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false); // State untuk pop-up hapus
-  const [genreToDelete, setGenreToDelete] = useState(null); // State untuk genre yang akan dihapus
-  const [itemsPerPage, setItemsPerPage] = useState(10); // State untuk jumlah data per halaman
-  const [currentPage, setCurrentPage] = useState(1); // State untuk halaman saat ini
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false); 
+  const [genreToDelete, setGenreToDelete] = useState(null); 
+  const [itemsPerPage, setItemsPerPage] = useState(10); 
+  const [currentPage, setCurrentPage] = useState(1); 
   const router = useRouter();
 
   const { search } = router.query;
@@ -121,7 +121,7 @@ const ManageGenre = () => {
       try {
         const token = Cookies.get('token');
         
-        // Mengambil data genre
+        
         const response = await axios.get("/api/genre", {
           headers: {
             Authorization: `Bearer ${token}`
@@ -137,12 +137,12 @@ const ManageGenre = () => {
     fetchGenres();
   }, []);
 
-  // Melakukan filter data genre berdasarkan query pencarian
+  
   const filteredGenres = genres.filter(
     (genre) => genre.name.toLowerCase().includes((search || "").toLowerCase())
   );
 
-  // Pagination Logic
+  
   const totalItems = filteredGenres.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -155,7 +155,7 @@ const ManageGenre = () => {
 
   const handleItemsPerPageChange = (value) => {
     setItemsPerPage(Number(value));
-    setCurrentPage(1); // Reset ke halaman pertama saat mengubah jumlah data per halaman
+    setCurrentPage(1); 
   };
 
   const handleDeleteGenre = async () => {
@@ -169,7 +169,7 @@ const ManageGenre = () => {
         }
       });
       setGenres((prevGenres) => prevGenres.filter((genre) => genre.id !== genreToDelete));
-      setShowDeleteDialog(false); // Tutup pop-up setelah berhasil menghapus
+      setShowDeleteDialog(false); 
     } catch (error) {
       console.error("Gagal menghapus genre", error);
     }
@@ -255,7 +255,6 @@ const ManageGenre = () => {
             </Table>
           </div>
 
-          {/* Pagination dan Select Jumlah Data per Halaman */}
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
@@ -293,7 +292,6 @@ const ManageGenre = () => {
         </>
       )}
 
-      {/* Pop-up Konfirmasi Hapus */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <AlertDialogHeader>

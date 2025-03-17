@@ -1,4 +1,3 @@
-// File: /pages/reset-password.tsx
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -16,7 +15,6 @@ const ResetPassword = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Get token from URL query parameters
     if (router.isReady) {
       const { token } = router.query;
       if (token && typeof token === "string") {
@@ -36,7 +34,6 @@ const ResetPassword = () => {
     setLoading(true);
     setError("");
 
-    // Validate passwords
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
@@ -65,7 +62,6 @@ const ResetPassword = () => {
         setPassword("");
         setConfirmPassword("");
         
-        // Redirect to login page after 3 seconds
         setTimeout(() => {
           router.push("/login");
         }, 3000);

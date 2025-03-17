@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// Mendapatkan userId dari token JWT
 function getUserIdFromToken(req: NextApiRequest): string | null {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
@@ -26,7 +25,7 @@ function getUserIdFromToken(req: NextApiRequest): string | null {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const userId = getUserIdFromToken(req); // Mendapatkan userId dari token
+  const userId = getUserIdFromToken(req); 
   if (!userId) {
     return res.status(401).json({
       error: 'Unauthorized',
@@ -35,12 +34,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Operasi GET untuk mendapatkan daftar rating berdasarkan film atau user
     if (req.method === 'GET') {
       const { filmId, userId } = req.query;
 
       if (filmId) {
-        // Mendapatkan rating berdasarkan filmId
         const ratings = await prisma.rating.findMany({
           where: {
             filmId: String(filmId),
@@ -50,7 +47,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       if (userId) {
-        // Mendapatkan rating berdasarkan userId
         const ratings = await prisma.rating.findMany({
           where: {
             userId: String(userId),
@@ -59,12 +55,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(200).json(ratings);
       }
 
-      // Jika tidak ada filmId atau userId, kembalikan semua rating
       const allRatings = await prisma.rating.findMany();
       return res.status(200).json(allRatings);
     }
 
-    // Operasi POST untuk menambah rating baru
     if (req.method === 'POST') {
       const { filmId, score, commentId } = req.body;
 
@@ -72,7 +66,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'FilmId and score are required' });
       }
 
-      // Cek apakah pengguna sudah memberikan rating pada film ini
       const existingRating = await prisma.rating.findFirst({
         where: {
           userId: userId,
@@ -81,11 +74,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       if (existingRating) {
-        // Jika rating sudah ada, kembalikan error
         return res.status(400).json({ error: 'You have already rated this film' });
       }
 
-      // Jika rating belum ada, buat rating baru
       const newRating = await prisma.rating.create({
         data: {
           userId,
@@ -98,7 +89,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(201).json(newRating);
     }
 
-    // Jika method tidak diizinkan
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (error) {
     console.error('Error handling API request:', error.message);

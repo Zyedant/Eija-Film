@@ -31,7 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'ID is required' });
   }
 
-  // Memeriksa autentikasi user untuk operasi selain GET
   const userId = getUserIdFromToken(req);
   if (!userId) {
     return res.status(401).json({
@@ -42,7 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === 'GET') {
-      // Mendapatkan satu pengguna berdasarkan ID
       const user = await prisma.user.findUnique({
         where: { id: String(id) },
       });
@@ -53,7 +51,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PUT') {
-      // Memperbarui pengguna berdasarkan ID
       const { name, email, role, isActive, imageUrl } = req.body;
 
       const updatedUser = await prisma.user.update({
@@ -71,7 +68,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'DELETE') {
-      // Menghapus pengguna berdasarkan ID
       await prisma.user.delete({
         where: { id: String(id) },
       });

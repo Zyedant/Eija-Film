@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
-// Secret key used to sign JWT tokens (should be stored in environment variables)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 function getUserIdFromToken(req: NextApiRequest): string | null {
@@ -29,7 +28,6 @@ function getUserIdFromToken(req: NextApiRequest): string | null {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    // Operasi GET untuk mendapatkan daftar film
     if (req.method === 'GET') {
       const films = await prisma.film.findMany({
         include: {
@@ -39,7 +37,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(films);
     }
 
-    // Memeriksa autentikasi user untuk operasi selain GET
     const userId = getUserIdFromToken(req);
     if (!userId) {
       return res.status(401).json({
@@ -55,7 +52,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Title, description, and category are required' });
       }
     
-      // Validasi episode jika kategori adalah SERIES atau ANIME
       if ((category === 'SERIES' || category === 'ANIME') && (!episode || episode <= 0)) {
         return res.status(400).json({ error: 'Episode is required for SERIES or ANIME' });
       }
@@ -80,7 +76,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(201).json(newFilm);
     }
 
-    // Jika method lainnya
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (error) {
     console.error('Error handling API request:', error.message);

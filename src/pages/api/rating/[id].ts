@@ -41,7 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === 'GET') {
-      // Handle GET request for a single rating by ID
       const rating = await prisma.rating.findUnique({
         where: { id: String(id) },
       });
@@ -52,7 +51,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PUT') {
-      // Handle PUT request to update a rating
       const { score } = req.body;
 
       if (!score) {
@@ -69,7 +67,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'DELETE') {
-      // Handle DELETE request to remove a rating
       await prisma.rating.delete({
         where: { id: String(id) },
       });

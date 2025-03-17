@@ -41,7 +41,6 @@ const Profile = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const router = useRouter();
 
-  // Cek tema saat komponen dimuat
   useEffect(() => {
     const savedTheme = Cookies.get("theme");
     if (savedTheme === "dark") {
@@ -53,7 +52,6 @@ const Profile = () => {
     }
   }, []);
 
-  // Fungsi untuk mengubah tema
   const toggleTheme = () => {
     const newTheme = isDarkMode ? "light" : "dark";
     setIsDarkMode(!isDarkMode);
@@ -66,7 +64,6 @@ const Profile = () => {
     }
   };
 
-  // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
       setIsLoading(true);
@@ -225,7 +222,6 @@ const Profile = () => {
 
   return (
     <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? "bg-slate-900 text-white" : "bg-gray-100 text-gray-900"}`}>
-      {/* Header with back button */}
       <header className={`fixed top-0 left-0 right-0 px-4 py-3 ${isDarkMode ? "bg-slate-900/80" : "bg-white/80"} backdrop-blur-lg z-10 border-b ${isDarkMode ? "border-yellow-500/10" : "border-gray-200"}`}>
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Button 
@@ -241,7 +237,6 @@ const Profile = () => {
             Profil Pengguna
           </h1>
           
-          {/* Tombol Toggle Tema */}
           <button
             onClick={toggleTheme}
             className={`p-2 rounded-full ${
@@ -253,11 +248,9 @@ const Profile = () => {
         </div>
       </header>
 
-      {/* Main content */}
       <div className="w-full max-w-4xl px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
-          {/* Sidebar/Avatar section */}
           <div className="lg:col-span-4">
             <Card className={`${isDarkMode ? "bg-slate-800/50 border-yellow-500/10" : "bg-white border-gray-200"} shadow-xl overflow-hidden`}>
               <div className="relative h-32 bg-gradient-to-r from-yellow-600/20 to-amber-500/20 flex items-center justify-center">
@@ -322,7 +315,6 @@ const Profile = () => {
                 
                 <Separator className={`my-6 ${isDarkMode ? "bg-yellow-500/10" : "bg-gray-200"}`} />
                 
-                {/* Action Buttons */}
                 <div className="w-full">
                   {isEditing ? (
                     <div className="flex flex-col gap-3">
@@ -354,7 +346,6 @@ const Profile = () => {
             </Card>
           </div>
           
-          {/* Main content area with tabs */}
           <div className="lg:col-span-8">
             <Tabs defaultValue="profile" className="w-full">
               <TabsList className={`grid grid-cols-2 ${isDarkMode ? "bg-slate-800/50 border-yellow-500/10" : "bg-gray-100 border-gray-200"} mb-6`}>
@@ -366,7 +357,6 @@ const Profile = () => {
                 </TabsTrigger>
               </TabsList>
               
-              {/* Profile Tab */}
               <TabsContent value="profile">
                 <Card className={`${isDarkMode ? "bg-slate-800/50 border-yellow-500/10" : "bg-white border-gray-200"} shadow-xl`}>
                   <CardHeader className="p-6 pb-2">
@@ -412,7 +402,6 @@ const Profile = () => {
                 </Card>
               </TabsContent>
               
-              {/* Security Tab */}
               <TabsContent value="security">
                 <Card className={`${isDarkMode ? "bg-slate-800/50 border-yellow-500/10" : "bg-white border-gray-200"} shadow-xl`}>
                   <CardHeader className="p-6 pb-2">

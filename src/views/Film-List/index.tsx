@@ -24,11 +24,10 @@ const FilmList = () => {
       try {
         const response = await fetch("/api/film");
         const data = await response.json();
-        console.log(data); // Cek struktur data yang diterima
+        console.log(data); 
         setFilms(data);
         setFilteredFilms(data);
-
-        // Ekstrak semua genre dari genreRelations
+        
         const allGenres = [
           ...new Set(
             data.flatMap((film) =>
@@ -36,14 +35,11 @@ const FilmList = () => {
             )
           ),
         ];
-
-        // Ekstrak semua kategori
+        
         const allCategories = [...new Set(data.map((film) => film.category))];
-
-        // Ekstrak semua tahun rilis
+        
         const allReleaseYears = [...new Set(data.map((film) => film.releaseYear))];
-
-        // Set state untuk genre, kategori, dan tahun rilis
+        
         setGenres(allGenres);
         setCategories(allCategories);
         setReleaseYears(allReleaseYears);
@@ -59,27 +55,23 @@ const FilmList = () => {
 
   const handleFilterChange = () => {
     let filtered = films;
-
-    // Filter berdasarkan genre
+    
     if (selectedGenre) {
       filtered = filtered.filter((film) =>
         film.genreRelations.some((relation) => relation.genre.name === selectedGenre)
       );
     }
 
-    // Filter berdasarkan kategori
     if (selectedCategory) {
       filtered = filtered.filter((film) => film.category === selectedCategory);
     }
-
-    // Filter berdasarkan tahun rilis
+    
     if (selectedReleaseYear) {
       filtered = filtered.filter(
         (film) => film.releaseYear === Number(selectedReleaseYear)
       );
     }
-
-    // Set hasil filter ke state
+    
     setFilteredFilms(filtered);
   };
 
@@ -87,7 +79,7 @@ const FilmList = () => {
     setSelectedGenre("");
     setSelectedCategory("");
     setSelectedReleaseYear("");
-    setFilteredFilms(films); // Kembalikan ke semua film
+    setFilteredFilms(films); 
   };
 
   const toggleFilter = () => {
@@ -101,7 +93,6 @@ const FilmList = () => {
           Film List
         </h1>
 
-        {/* Filters Section */}
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={toggleFilter}
@@ -115,7 +106,6 @@ const FilmList = () => {
         {isFilterOpen && (
           <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Genre Filter */}
               <div>
                 <label className="block font-medium mb-2">Genre</label>
                 <select
@@ -132,7 +122,6 @@ const FilmList = () => {
                 </select>
               </div>
 
-              {/* Category Filter */}
               <div>
                 <label className="block font-medium mb-2">Category</label>
                 <select
@@ -149,7 +138,6 @@ const FilmList = () => {
                 </select>
               </div>
 
-              {/* Release Year Filter */}
               <div>
                 <label className="block font-medium mb-2">Release Year</label>
                 <select
@@ -184,7 +172,6 @@ const FilmList = () => {
           </div>
         )}
 
-        {/* Films Grid */}
         {isLoading ? (
           <div className="flex justify-center items-center mb-12">
             <div className="animate-spin border-t-4 border-yellow-500 w-16 h-16 rounded-full"></div>

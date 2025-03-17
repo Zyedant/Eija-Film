@@ -23,11 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox dari shadcn
+import { Checkbox } from "@/components/ui/checkbox"; 
 
-// Komponen GenreRelationForm
+
 const GenreRelationForm = ({ onSaveGenreRelation, onCancel, filmId, existingGenres }) => {
-  const [selectedGenres, setSelectedGenres] = useState(existingGenres || []); // Default dari existingGenres
+  const [selectedGenres, setSelectedGenres] = useState(existingGenres || []); 
   const [availableGenres, setAvailableGenres] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -89,7 +89,6 @@ const GenreRelationForm = ({ onSaveGenreRelation, onCancel, filmId, existingGenr
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-      {/* Header dengan Gradient */}
       <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 p-4 rounded-t-lg mb-6">
         <h2 className="text-2xl font-semibold text-white">Kelola Genre untuk Film</h2>
       </div>
@@ -98,7 +97,6 @@ const GenreRelationForm = ({ onSaveGenreRelation, onCancel, filmId, existingGenr
         <p className="text-center text-gray-600 dark:text-gray-400">Memuat genre...</p>
       ) : (
         <form onSubmit={handleSubmit}>
-          {/* Pilih Genre */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
               Pilih Genre (multiple)
@@ -130,7 +128,6 @@ const GenreRelationForm = ({ onSaveGenreRelation, onCancel, filmId, existingGenr
             </div>
           </div>
 
-          {/* Tombol Aksi */}
           <div className="flex justify-end space-x-3 mt-6">
             <Button
               type="button"
@@ -152,7 +149,7 @@ const GenreRelationForm = ({ onSaveGenreRelation, onCancel, filmId, existingGenr
   );
 };
 
-// Komponen AddGenreToFilm
+
 const AddGenreToFilm = ({ filmId, onGenreAdded }) => {
   const [availableGenres, setAvailableGenres] = useState([]);
   const [selectedGenreIds, setSelectedGenreIds] = useState([]);
@@ -250,7 +247,7 @@ const AddGenreToFilm = ({ filmId, onGenreAdded }) => {
   );
 };
 
-// Komponen Utama ManageGenreRelation
+
 const ManageGenreRelation = () => {
   const [genreRelations, setGenreRelations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -270,7 +267,7 @@ const ManageGenreRelation = () => {
       try {
         const token = Cookies.get('token');
         
-        // Mengambil data film
+        
         const filmsResponse = await axios.get("/api/film", {
           headers: {
             Authorization: `Bearer ${token}`
@@ -279,7 +276,7 @@ const ManageGenreRelation = () => {
         
         setFilms(filmsResponse.data);
 
-        // Mengambil data genre relation
+        
         const relationsResponse = await axios.get("/api/genre-relation", {
           headers: {
             Authorization: `Bearer ${token}`
@@ -297,7 +294,7 @@ const ManageGenreRelation = () => {
     fetchData();
   }, []);
 
-  // Group genre relations by film
+  
   const groupedRelations = genreRelations.reduce((acc, relation) => {
     if (!acc[relation.filmId]) {
       acc[relation.filmId] = {
@@ -310,15 +307,15 @@ const ManageGenreRelation = () => {
     return acc;
   }, {});
 
-  // Convert the object to array for rendering
+  
   const filmsWithGenres = Object.values(groupedRelations);
 
-  // Filter by search term (film title)
+  
   const filteredFilmsWithGenres = filmsWithGenres.filter(
     (item) => item.film.title.toLowerCase().includes((search || "").toLowerCase())
   );
 
-  // Pagination Logic
+  
   const totalItems = filteredFilmsWithGenres.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -342,7 +339,7 @@ const ManageGenreRelation = () => {
     setSelectedFilm({
       id: film.id,
       title: film.title,
-      genres: existingGenres, // Kirim genre yang sudah dipilih
+      genres: existingGenres, 
     });
     setShowForm(true);
   };
@@ -356,7 +353,7 @@ const ManageGenreRelation = () => {
     try {
       const token = Cookies.get('token');
       
-      // Refresh data after save
+      
       const relationsResponse = await axios.get("/api/genre-relation", {
         headers: {
           Authorization: `Bearer ${token}`
@@ -382,7 +379,7 @@ const ManageGenreRelation = () => {
         }
       });
       
-      // Refresh data after delete
+      
       const relationsResponse = await axios.get("/api/genre-relation", {
         headers: {
           Authorization: `Bearer ${token}`
@@ -479,7 +476,6 @@ const ManageGenreRelation = () => {
                 </Table>
               </div>
 
-              {/* Pagination dan Select Jumlah Data per Halaman */}
               <div className="flex justify-between items-center mt-4">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
@@ -515,7 +511,6 @@ const ManageGenreRelation = () => {
                 </div>
               </div>
 
-              {/* Tambahkan Genre ke Film */}
               {selectedFilm && (
                 <AddGenreToFilm 
                   filmId={selectedFilm.id} 
@@ -525,7 +520,6 @@ const ManageGenreRelation = () => {
             </>
           )}
 
-          {/* Pop-up Konfirmasi Hapus */}
           <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
             <AlertDialogContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
               <AlertDialogHeader>

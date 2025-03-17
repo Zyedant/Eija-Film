@@ -1,4 +1,3 @@
-// File: /pages/forgot-password.tsx
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -30,7 +29,7 @@ const ForgotPassword = () => {
 
       if (response.ok) {
         setSuccess(data.message || "Email has been sent with password reset instructions");
-        setEmail(""); // Clear the form
+        setEmail("");
       } else {
         setError(data.message || "Failed to process request");
       }

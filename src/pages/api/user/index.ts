@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
-// Secret key used to sign JWT tokens (should be stored in environment variables)
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 function getUserIdFromToken(req: NextApiRequest): string | null {
@@ -28,7 +27,6 @@ function getUserIdFromToken(req: NextApiRequest): string | null {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Memeriksa autentikasi user untuk operasi selain GET
   const userId = getUserIdFromToken(req);
   if (!userId) {
     return res.status(401).json({
@@ -39,7 +37,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === 'GET') {
-      // Mendapatkan semua pengguna
       const users = await prisma.user.findMany();
       return res.status(200).json(users);
     }

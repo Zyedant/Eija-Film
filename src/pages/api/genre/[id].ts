@@ -41,7 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === 'GET') {
-      // Handle GET request for a single genre by ID
       const genre = await prisma.genre.findUnique({
         where: { id: String(id) },
       });
@@ -52,7 +51,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PUT') {
-      // Handle PUT request to update a genre
       const { name } = req.body;
       const updatedGenre = await prisma.genre.update({
         where: { id: String(id) },
@@ -64,7 +62,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'DELETE') {
-      // Handle DELETE request to remove a genre
       await prisma.genre.delete({
         where: { id: String(id) },
       });

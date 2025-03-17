@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Komponen CommentRatingForm
+
 const CommentRatingForm = ({ onSave, onCancel, dataToEdit, films, userId, userRole }) => {
   const [content, setContent] = useState(dataToEdit?.content || "");
   const [score, setScore] = useState(dataToEdit?.score || 0);
@@ -121,7 +121,7 @@ const ManageCommentRating = () => {
 
   const router = useRouter();
 
-  // Fetch data komentar, rating, film, dan user
+  
   const fetchData = async () => {
     const token = Cookies.get("token");
     if (!token) {
@@ -142,7 +142,7 @@ const ManageCommentRating = () => {
         axios.get("/api/user", { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
-      // Gabungkan komentar dan rating berdasarkan commentId
+      
       const combinedData = commentResponse.data.map((comment) => {
         const rating = ratingResponse.data.find((rating) => rating.commentId === comment.id);
         return {
@@ -167,7 +167,7 @@ const ManageCommentRating = () => {
     fetchData();
   }, []);
 
-  // Fungsi untuk menyimpan komentar dan rating
+  
   const handleSave = async (data) => {
     const token = Cookies.get("token");
     if (!token) {
@@ -177,7 +177,7 @@ const ManageCommentRating = () => {
   
     try {
       if (dataToEdit) {
-        // Update komentar
+        
         const commentResponse = await axios.put(`/api/comment/${dataToEdit.id}`, {
           content: data.content,
           filmId: data.filmId,
@@ -185,7 +185,7 @@ const ManageCommentRating = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
   
-        // Update rating (jika ada)
+        
         if (dataToEdit.ratingId) {
           await axios.put(`/api/rating/${dataToEdit.ratingId}`, {
             score: data.score,
@@ -193,7 +193,7 @@ const ManageCommentRating = () => {
             headers: { Authorization: `Bearer ${token}` },
           });
         } else {
-          // Jika rating belum ada, buat rating baru
+          
           await axios.post("/api/rating", {
             score: data.score,
             filmId: data.filmId,
@@ -204,7 +204,7 @@ const ManageCommentRating = () => {
           });
         }
       } else {
-        // Tambah komentar baru
+        
         const commentResponse = await axios.post("/api/comment", {
           content: data.content,
           filmId: data.filmId,
@@ -213,7 +213,7 @@ const ManageCommentRating = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
   
-        // Tambah rating baru (untuk semua role)
+        
         await axios.post("/api/rating", {
           score: data.score,
           filmId: data.filmId,
@@ -224,7 +224,7 @@ const ManageCommentRating = () => {
         });
       }
   
-      // Refresh data setelah menyimpan
+      
       fetchData();
       setShowForm(false);
       setDataToEdit(null);
@@ -234,26 +234,26 @@ const ManageCommentRating = () => {
     }
   };
 
-  // Fungsi untuk menghapus komentar dan rating
+  
   const handleDelete = async () => {
     if (!itemToDelete) return;
 
     try {
       const token = Cookies.get("token");
 
-      // Hapus rating terlebih dahulu (jika ada)
+      
       if (itemToDelete.ratingId) {
         await axios.delete(`/api/rating/${itemToDelete.ratingId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
 
-      // Hapus komentar
+      
       await axios.delete(`/api/comment/${itemToDelete.commentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Refresh data setelah menghapus
+      
       fetchData();
       setShowDeleteDialog(false);
     } catch (error) {
@@ -261,7 +261,7 @@ const ManageCommentRating = () => {
     }
   };
 
-  // Fungsi untuk mengedit komentar dan rating
+  
   const handleEdit = (data) => {
     if (userRole === "ADMIN" || data.userId === userId) {
       setDataToEdit({
@@ -277,24 +277,24 @@ const ManageCommentRating = () => {
     }
   };
 
-  // Fungsi untuk mendapatkan nama film berdasarkan ID
+  
   const getFilmTitleById = (filmId) => {
     const film = films.find((film) => film.id === filmId);
     return film ? film.title : "Film tidak ditemukan";
   };
 
-  // Fungsi untuk mendapatkan nama user berdasarkan ID
+  
   const getUserNameById = (userId) => {
     const user = users.find((user) => user.id === userId);
     return user ? user.name : "User tidak ditemukan";
   };
 
-  // Fungsi untuk memeriksa apakah user dapat mengedit atau menghapus data
+  
   const canEditOrDelete = (data) => {
     return userRole === "ADMIN" || data.userId === userId;
   };
 
-  // Pagination Logic
+  
   const totalItems = commentsRatings.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -337,7 +337,6 @@ const ManageCommentRating = () => {
             </Button>
           </div>
 
-          {/* Tabel Gabungan */}
           <div className="overflow-x-auto border border-gray-300 dark:border-gray-700 rounded-lg">
             <Table className="min-w-max table-auto text-sm">
               <TableHeader>
@@ -381,7 +380,6 @@ const ManageCommentRating = () => {
             </Table>
           </div>
 
-          {/* Pagination dan Select Jumlah Data per Halaman */}
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
@@ -419,7 +417,6 @@ const ManageCommentRating = () => {
         </>
       )}
 
-      {/* Pop-up Konfirmasi Hapus */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <AlertDialogHeader>

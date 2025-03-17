@@ -36,7 +36,7 @@ interface Comment {
   user: {
     id: string;
     name: string;
-    role: string; // Tambahkan role user (ADMIN, AUTHOR, USER)
+    role: string; 
   };
   content: string;
   rating?: {
@@ -79,26 +79,26 @@ const FilmDetail = () => {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [showAllComments, setShowAllComments] = useState(false);
   const [expandedComment, setExpandedComment] = useState<string | null>(null);
-  const [showTrailer, setShowTrailer] = useState(false); // State untuk menampilkan trailer
-  const [isDarkMode, setIsDarkMode] = useState(true); // State for theme
+  const [showTrailer, setShowTrailer] = useState(false); 
+  const [isDarkMode, setIsDarkMode] = useState(true); 
   const { query, isReady, push } = useRouter();
   const filmSlug = query.slug as string | undefined;
   const sliderIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Number of comment
+  
   const commentsToShow = 3;
 
-  // Load theme from cookies and set up listeners
+  
   useEffect(() => {
     const handleThemeChange = () => {
       const savedTheme = Cookies.get("theme");
       setIsDarkMode(savedTheme === "dark");
     };
 
-    // Initial theme setup
+    
     handleThemeChange();
 
-    // Set up a listener to detect theme changes
+    
     const cookieCheckInterval = setInterval(() => {
       handleThemeChange();
     }, 1000);
@@ -136,7 +136,7 @@ const FilmDetail = () => {
     fetchCurrentUser();
   }, []);
 
-  // Fetch film data
+  
   useEffect(() => {
     if (!isReady || !filmSlug) return;
 
@@ -152,13 +152,13 @@ const FilmDetail = () => {
 
         const filmData = await filmRes.json();
 
-        // Calculate average rating (only from USER role)
+        
         let totalRating = 0;
         let ratingCount = 0;
 
         if (filmData.comments && filmData.comments.length > 0) {
           filmData.comments.forEach((comment) => {
-            // Only count ratings from USER role
+            
             if (comment.user.role === "USER" && comment.rating && comment.rating.length > 0) {
               totalRating += comment.rating[0].score;
               ratingCount++;
@@ -168,7 +168,7 @@ const FilmDetail = () => {
 
         const avgRating = ratingCount > 0 ? totalRating / ratingCount : 0;
 
-        // Check if the current user has commented
+        
         let userCommented = false;
         let userRating = null;
         let userCommentId = null;
@@ -209,7 +209,7 @@ const FilmDetail = () => {
 
         console.log(filmData);
 
-        // Fetch comments (if needed)
+        
         if (filmData.id) {
           fetchComments(filmData.id);
         }
@@ -224,7 +224,7 @@ const FilmDetail = () => {
     fetchFilmData();
   }, [filmSlug, isReady, currentUserId]);
 
-  // Fetch comments
+  
   const fetchComments = async (filmId: string) => {
     try {
       const commentsRes = await fetch(`/api/comment?filmId=${encodeURIComponent(filmId)}`);
@@ -256,13 +256,13 @@ const FilmDetail = () => {
     }
   };
 
-  // Handle add comment
+  
   const handleAddComment = async () => {
     if (!film || !currentUserId || film.userCommented) return;
   
     if (comment.trim()) {
       try {
-        // Save the comment
+        
         const commentRes = await fetch(`/api/comment`, {
           method: "POST",
           headers: {
@@ -281,7 +281,7 @@ const FilmDetail = () => {
           throw new Error("Failed to add comment");
         }
   
-        // Save the rating (only if user is USER)
+        
         if (rating !== null) {
           const ratingRes = await fetch(`/api/rating`, {
             method: "POST",
@@ -301,7 +301,7 @@ const FilmDetail = () => {
           }
         }
   
-        // Update the film state with the new comment
+        
         setFilm((prevFilm) => ({
           ...prevFilm!,
           userCommented: true,
@@ -309,7 +309,7 @@ const FilmDetail = () => {
           userCommentId: responseComment.id,
         }));
   
-        // After adding the comment and rating, re-fetch comments
+        
         fetchComments(film.id);
   
         toast.success("Komentar berhasil ditambahkan!");
@@ -326,12 +326,12 @@ const FilmDetail = () => {
     }
   };
 
-  // Handle update comment
+  
   const handleUpdateComment = async () => {
     if (!film || !editingCommentId) return;
   
     try {
-      // Update the comment
+      
       const commentRes = await fetch(`/api/comment/${editingCommentId}`, {
         method: "PUT",
         headers: {
@@ -346,7 +346,7 @@ const FilmDetail = () => {
         throw new Error("Failed to update comment");
       }
   
-      // Update the rating (only if rating is not null)
+      
       if (rating !== null) {
         const ratingId = commentList.find((c) => c.id === editingCommentId)?.rating?.[0]?.id;
         if (ratingId) {
@@ -366,7 +366,7 @@ const FilmDetail = () => {
         }
       }
       
-      // Refresh comments
+      
       fetchComments(film.id);
   
       toast.success("Komentar berhasil diperbarui!");
@@ -380,20 +380,20 @@ const FilmDetail = () => {
     }
   };
 
-  // Handle delete comment
+  
   const handleDeleteComment = async (commentId: string) => {
     if (!film) return;
   
     if (confirm("Apakah Anda yakin ingin menghapus komentar ini?")) {
       try {
-        // Cari komentar yang akan dihapus
+        
         const commentToDelete = commentList.find((c) => c.id === commentId);
   
         if (!commentToDelete) {
           throw new Error("Comment not found");
         }
   
-        // Hapus rating yang terkait dengan komentar (jika ada)
+        
         if (commentToDelete.rating && commentToDelete.rating.length > 0) {
           for (const rating of commentToDelete.rating) {
             await fetch(`/api/rating/${rating.id}`, {
@@ -402,7 +402,7 @@ const FilmDetail = () => {
           }
         }
   
-        // Hapus komentar
+        
         const deleteRes = await fetch(`/api/comment/${commentId}`, {
           method: "DELETE",
         });
@@ -411,7 +411,7 @@ const FilmDetail = () => {
           throw new Error("Failed to delete comment");
         }
   
-        // Update the film state
+        
         setFilm((prevFilm) => ({
           ...prevFilm!,
           userCommented: false,
@@ -419,7 +419,7 @@ const FilmDetail = () => {
           userCommentId: null,
         }));
   
-        // Refresh comments
+        
         fetchComments(film.id);
   
         toast.success("Komentar berhasil dihapus!");
@@ -430,12 +430,12 @@ const FilmDetail = () => {
     }
   };
 
-  // Handle rating change
+  
   const handleRatingChange = (newRating: number) => {
     setRating(newRating);
   };
 
-  // Cancel edit
+  
   const cancelEdit = () => {
     setIsEditing(false);
     setComment("");
@@ -443,7 +443,7 @@ const FilmDetail = () => {
     setEditingCommentId(null);
   };
 
-  // Toggle expand comment
+  
   const toggleExpandComment = (commentId: string) => {
     if (expandedComment === commentId) {
       setExpandedComment(null);
@@ -452,7 +452,7 @@ const FilmDetail = () => {
     }
   };
 
-  // Render loading state
+  
   if (loading) {
     return (
       <div className={`flex justify-center items-center min-h-screen ${isDarkMode ? 'bg-gradient-to-b from-gray-800 to-gray-900' : 'bg-gradient-to-b from-gray-100 to-white'}`}>
@@ -461,7 +461,7 @@ const FilmDetail = () => {
     );
   }
 
-  // Render error state
+  
   if (error || !film) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDarkMode ? 'bg-gradient-to-b from-gray-800 to-gray-900' : 'bg-gradient-to-b from-gray-100 to-white'}`}>
@@ -482,7 +482,6 @@ const FilmDetail = () => {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-b from-gray-800 to-gray-900 text-white' : 'bg-gradient-to-b from-gray-100 to-white text-gray-900'}`}>
-      {/* Background Image with Gradient Overlay */}
       <div className="relative">
         <div
           className="absolute top-0 left-0 w-full h-[500px] bg-cover bg-center"
@@ -491,10 +490,8 @@ const FilmDetail = () => {
         <div className={`absolute top-0 left-0 w-full h-[500px] ${isDarkMode ? 'bg-gradient-to-b from-black/70 to-gray-900' : 'bg-gradient-to-b from-black/50 to-white'}`} />
       </div>
 
-      {/* Main Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-12">
         <div className="grid md:grid-cols-[300px_1fr] gap-8">
-          {/* Poster and Trailer Button */}
           <div className="relative">
             <img
               src={film.posterUrl}
@@ -515,14 +512,12 @@ const FilmDetail = () => {
             )}
           </div>
 
-          {/* Film Details */}
           <div>
             <h1 className={`text-4xl font-bold mb-2 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>{film.title}</h1>
             {film.director && (
               <p className={`text-xl ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-6`}>Disutradarai oleh {film.director}</p>
             )}
 
-            {/* Film Metadata */}
             <div className="flex items-center space-x-6 mb-6">
               {film.releaseYear > 0 && (
                 <div className="flex items-center gap-2">
@@ -538,7 +533,6 @@ const FilmDetail = () => {
                 </div>
               )}
 
-              {/* Overall Rating */}
               {film.avgRating > 0 && (
                 <div className="flex items-center gap-2">
                   <div className="flex">
@@ -556,7 +550,6 @@ const FilmDetail = () => {
               )}
             </div>
 
-            {/* Genres */}
             <div className="flex flex-wrap gap-2 mb-8">
               {film.genres && film.genres.length > 0 ? (
                 film.genres.map((genre) => (
@@ -569,13 +562,11 @@ const FilmDetail = () => {
               )}
             </div>
 
-            {/* Description */}
             <div className="mb-8">
               <h3 className={`text-2xl font-semibold mb-3 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Ringkasan</h3>
               <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} leading-relaxed`}>{film.description}</p>
             </div>
 
-            {/* Cast */}
             <div className="mb-8">
               <h3 className={`text-2xl font-semibold mb-4 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>Pemeran</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -604,17 +595,15 @@ const FilmDetail = () => {
               </div>
             </div>
 
-            {/* Trailer Modal */}
             {showTrailer && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
                 <div className="relative w-full max-w-4xl bg-gray-900 rounded-lg overflow-hidden">
-                  {/* Close Button */}
                   <button
                     onClick={() => setShowTrailer(false)}
                     className="absolute top-4 right-4 z-50 p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors"
                   >
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
+                      xmlns="http:"
                       className="h-6 w-6 text-white"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -629,7 +618,6 @@ const FilmDetail = () => {
                     </svg>
                   </button>
 
-                  {/* Trailer Embed */}
                   <iframe
                     src={`${film.trailerUrl}`}
                     title={`${film.title} Trailer`}
@@ -641,7 +629,6 @@ const FilmDetail = () => {
               </div>
             )}
 
-            {/* Comments Section */}
             <div className="mt-10">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-2">
@@ -652,9 +639,7 @@ const FilmDetail = () => {
                 </div>
               </div>
 
-              {/* Comments Container */}
               <div className={`${isDarkMode ? 'bg-gray-800/60 border border-gray-700' : 'bg-white/90 border border-gray-200'} rounded-xl overflow-hidden`}>
-                {/* Comments Header */}
                 <div className={`${isDarkMode ? 'bg-gray-700/80' : 'bg-gray-200/90'} p-4 flex justify-between items-center`}>
                   <div className="flex items-center gap-2">
                     <FaComments className={`${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
@@ -679,7 +664,6 @@ const FilmDetail = () => {
                   </Button>
                 </div>
 
-                {/* Comments List */}
                 <div className="max-h-[600px] overflow-y-auto p-4">
                   {commentList && commentList.length > 0 ? (
                     (showAllComments ? commentList : commentList.slice(0, commentsToShow)).map((commentItem) => (
@@ -690,7 +674,6 @@ const FilmDetail = () => {
                           : `bg-gray-100/80 ${commentItem.user.id === currentUserId ? 'border-yellow-600/40' : 'border-gray-300'} hover:bg-gray-200`} 
                           p-4 rounded-lg shadow-md border transition-all ${expandedComment === commentItem.id ? (isDarkMode ? 'border-yellow-400' : 'border-yellow-600') : ''}`}
                       >
-                        {/* Comment Header */}
                         <div className="flex justify-between items-center">
                           <span className={`font-semibold ${
                             commentItem.user.id === currentUserId
@@ -700,7 +683,6 @@ const FilmDetail = () => {
                             {commentItem.user.name}
                             {commentItem.user.id === currentUserId && " (Anda)"}
                           </span>
-                          {/* Tampilkan rating hanya jika user bukan ADMIN atau AUTHOR */}
                           {commentItem.user.role === "USER" && (
                             <div className="flex items-center gap-1">
                               {[...Array(5)].map((_, i) => (
@@ -715,7 +697,6 @@ const FilmDetail = () => {
                           )}
                         </div>
 
-                        {/* Comment Content */}
                         <div className="mt-2 relative">
                           <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'} leading-relaxed ${
                             expandedComment === commentItem.id ? "" : "line-clamp-2"
@@ -723,7 +704,6 @@ const FilmDetail = () => {
                             {commentItem.content}
                           </p>
 
-                          {/* Expand button - only show if content is long */}
                           {commentItem.content.length > 100 && (
                             <Button
                               variant="ghost"
@@ -737,13 +717,11 @@ const FilmDetail = () => {
                           )}
                         </div>
 
-                        {/* Comment Footer */}
                         <div className="flex justify-between items-center mt-2 text-sm">
                           <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                             {new Date(commentItem.createdAt).toLocaleDateString()}
                           </span>
                           
-                          {/* Action buttons for user's own comment */}
                           {(currentUserId === commentItem.user.id || currentUserRole === "ADMIN") && (
                             <div className="flex items-center space-x-2">
                               <Button
@@ -781,7 +759,6 @@ const FilmDetail = () => {
                   )}
                 </div>
 
-                {/* Pagination/Show More Button */}
                 {!showAllComments && commentList.length > commentsToShow && (
                   <div className="p-4 border-t border-gray-700 flex justify-center">
                     <Button
@@ -796,7 +773,6 @@ const FilmDetail = () => {
                   </div>
                 )}
 
-                {/* Add Comment Form */}
                 <div className={`${isDarkMode ? 'bg-gray-700/80' : 'bg-gray-100/90'} p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}>
                   {currentUserId ? (
                     film.userCommented && !isEditing ? (
@@ -828,7 +804,6 @@ const FilmDetail = () => {
                           {isEditing ? "Edit Ulasan Anda" : "Berikan Ulasan Anda"}
                         </h4>
                         
-                        {/* Rating Stars - Only for USER role */}
                         {currentUserRole === "USER" && (
                           <div className="mb-4">
                             <div className="flex items-center gap-2">
@@ -855,7 +830,6 @@ const FilmDetail = () => {
                           </div>
                         )}
                         
-                        {/* Comment Text Area */}
                         <textarea
                           value={comment}
                           onChange={(e) => setComment(e.target.value)}
@@ -870,7 +844,6 @@ const FilmDetail = () => {
                           rows={4}
                         />
                         
-                        {/* Action Buttons */}
                         <div className="flex justify-end mt-3 gap-3">
                           {isEditing && (
                             <Button

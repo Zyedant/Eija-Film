@@ -41,7 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === 'GET') {
-      // Handle GET request for a single film by ID
       const film = await prisma.film.findUnique({
         where: { id: String(id) },
       });
@@ -54,12 +53,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === 'PUT') {
       const { title, description, posterUrl, trailerUrl, duration, releaseYear, category, episode } = req.body;
     
-      // Validasi episode jika kategori adalah SERIES atau ANIME
       if ((category === 'SERIES' || category === 'ANIME') && (!episode || episode <= 0)) {
         return res.status(400).json({ error: 'Episode is required for SERIES or ANIME' });
       }
     
-      // Update the film with the provided data
       const updatedFilm = await prisma.film.update({
         where: { id: String(id) },
         data: {
@@ -77,7 +74,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'DELETE') {
-      // Handle DELETE request to remove a film
       await prisma.film.delete({
         where: { id: String(id) },
       });

@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Formulir untuk menambahkan atau mengedit pengguna
+
 const UserForm = ({ onSaveUser, onCancel, userToEdit }) => {
   const [name, setName] = useState(userToEdit ? userToEdit.name : "");
   const [email, setEmail] = useState(userToEdit ? userToEdit.email : "");
@@ -39,7 +39,7 @@ const UserForm = ({ onSaveUser, onCancel, userToEdit }) => {
     e.preventDefault();
     let uploadedImageUrl = imageUrl;
 
-    // Jika ada file gambar yang di-upload
+    
     if (imageFile) {
       const formData = new FormData();
       formData.append("file", imageFile);
@@ -261,10 +261,10 @@ const ManageUser = () => {
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
   const handleDeleteUser = async () => {
-    if (!userToDelete || isDeleting) return; // Cegah jika sudah dalam proses
+    if (!userToDelete || isDeleting) return; 
   
     try {
-      setIsDeleting(true); // Set status sedang menghapus
+      setIsDeleting(true); 
   
       const token = Cookies.get('token');
   
@@ -272,7 +272,7 @@ const ManageUser = () => {
         const userToDeleteCheck = users.find(user => user.id === userToDelete);
         if (userToDeleteCheck && userToDeleteCheck.id !== currentUser.id) {
           console.error("Tidak memiliki izin untuk menghapus user ini.");
-          setIsDeleting(false); // Reset status deleting
+          setIsDeleting(false); 
           return;
         }
       }
@@ -288,7 +288,7 @@ const ManageUser = () => {
     } catch (error) {
       console.error("Gagal menghapus user", error);
     } finally {
-      setIsDeleting(false); // Reset status deleting setelah selesai
+      setIsDeleting(false); 
     }
   };  
 
@@ -424,7 +424,6 @@ const ManageUser = () => {
           </div>
 
           <div className="flex justify-between items-center mt-4">
-            {/* Select untuk jumlah data per halaman */}
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
               <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
@@ -441,7 +440,6 @@ const ManageUser = () => {
               <span className="text-sm text-gray-600 dark:text-gray-400">data per halaman</span>
             </div>
                         
-            {/* Tombol Pagination */}
             <div className="flex space-x-2">
               <Button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -462,7 +460,6 @@ const ManageUser = () => {
         </>
       )}
 
-      {/* Pop-up Konfirmasi Hapus */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <AlertDialogHeader>

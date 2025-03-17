@@ -34,13 +34,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Operasi GET untuk mendapatkan daftar genre
     if (req.method === 'GET') {
       const genres = await prisma.genre.findMany();
       return res.status(200).json(genres);
     }
 
-    // Operasi POST untuk menambah genre baru
     if (req.method === 'POST') {
       const { name } = req.body;
 
@@ -57,7 +55,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(201).json(newGenre);
     }
 
-    // Jika method lainnya
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (error) {
     console.error('Error handling API request:', error.message);

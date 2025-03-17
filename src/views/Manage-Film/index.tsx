@@ -25,15 +25,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Komponen FilmDetail dengan Mode Edit Langsung
+
 const FilmDetail = ({ film, onBack, users, onSave }) => {
-  const [isEditing, setIsEditing] = useState(false); // State untuk mode edit
-  const [editedFilm, setEditedFilm] = useState(film); // State untuk data yang diedit
-  const [uploadTypePoster, setUploadTypePoster] = useState('url'); // State untuk metode upload poster
-  const [uploadTypeTrailer, setUploadTypeTrailer] = useState('url'); // State untuk metode upload trailer
+  const [isEditing, setIsEditing] = useState(false); 
+  const [editedFilm, setEditedFilm] = useState(film); 
+  const [uploadTypePoster, setUploadTypePoster] = useState('url'); 
+  const [uploadTypeTrailer, setUploadTypeTrailer] = useState('url'); 
 
   const handleEdit = () => {
-    setIsEditing(true); // Masuk ke mode edit
+    setIsEditing(true); 
   };
 
   const handleSave = async () => {
@@ -44,8 +44,8 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setIsEditing(false); // Keluar dari mode edit
-      onSave(editedFilm); // Perbarui data di parent component
+      setIsEditing(false); 
+      onSave(editedFilm); 
     } catch (error) {
       console.error("Gagal menyimpan perubahan", error);
     }
@@ -121,7 +121,6 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Poster dan Trailer */}
         <div className="md:col-span-1">
           <div className="flex flex-col space-y-4">
             <div>
@@ -222,7 +221,6 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
           </div>
         </div>
 
-        {/* Informasi Film */}
         <div className="md:col-span-2">
           <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg h-full">
             <h1 className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
@@ -384,7 +382,7 @@ const FilmDetail = ({ film, onBack, users, onSave }) => {
   );
 };
 
-// Komponen FilmForm untuk Tambah Data
+
 const FilmForm = ({ onSaveFilm, onCancel }) => {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -612,7 +610,7 @@ const FilmForm = ({ onSaveFilm, onCancel }) => {
   );
 };
 
-// Komponen ManageFilm
+
 const ManageFilm = () => {
   const [films, setFilms] = useState([]);
   const [users, setUsers] = useState([]);
@@ -623,8 +621,8 @@ const ManageFilm = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [filmToDelete, setFilmToDelete] = useState(null);
-  const [itemsPerPage, setItemsPerPage] = useState(10); // State untuk jumlah data per halaman
-  const [currentPage, setCurrentPage] = useState(1); // State untuk halaman saat ini
+  const [itemsPerPage, setItemsPerPage] = useState(10); 
+  const [currentPage, setCurrentPage] = useState(1); 
   const router = useRouter();
 
   const { search } = router.query;
@@ -701,7 +699,7 @@ const ManageFilm = () => {
       film.slug.toLowerCase().includes((search || "").toLowerCase())
   );
 
-  // Pagination Logic
+  
   const totalItems = filteredFilms.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -714,7 +712,7 @@ const ManageFilm = () => {
 
   const handleItemsPerPageChange = (value) => {
     setItemsPerPage(Number(value));
-    setCurrentPage(1); // Reset ke halaman pertama saat mengubah jumlah data per halaman
+    setCurrentPage(1); 
   };
 
   const handleDeleteFilm = async () => {
@@ -737,7 +735,7 @@ const ManageFilm = () => {
         }
       });
       setFilms((prevFilms) => prevFilms.filter((film) => film.id !== filmToDelete));
-      setShowDeleteDialog(false); // Tutup pop-up setelah berhasil menghapus
+      setShowDeleteDialog(false); 
     } catch (error) {
       console.error("Gagal menghapus film", error);
     }
@@ -751,7 +749,7 @@ const ManageFilm = () => {
     setFilms((prevFilms) =>
       prevFilms.map((f) => (f.id === updatedFilm.id ? updatedFilm : f))
     );
-    setSelectedFilm(updatedFilm); // Perbarui data yang ditampilkan di detail
+    setSelectedFilm(updatedFilm); 
   };
 
   const handleBackFromDetail = () => {
@@ -760,7 +758,7 @@ const ManageFilm = () => {
 
   const handleAddFilm = (newFilm) => {
     setFilms((prevFilms) => [...prevFilms, newFilm]);
-    setShowForm(false); // Tutup form setelah berhasil menambahkan film
+    setShowForm(false); 
   };
 
   const getUserNameById = (userId) => {
@@ -861,7 +859,6 @@ const ManageFilm = () => {
             </Table>
           </div>
 
-          {/* Pagination dan Select Jumlah Data per Halaman */}
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600 dark:text-gray-400">Tampilkan</span>
@@ -899,7 +896,6 @@ const ManageFilm = () => {
         </>
       )}
 
-      {/* Pop-up Konfirmasi Hapus */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <AlertDialogHeader>
