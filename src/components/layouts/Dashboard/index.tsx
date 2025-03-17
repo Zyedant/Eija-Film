@@ -17,17 +17,14 @@ const Dashboard = () => {
   const token = Cookies.get("token");
   const router = useRouter();
 
-  
   useEffect(() => {
     const handleThemeChange = () => {
       const savedTheme = Cookies.get("theme");
       setIsDarkMode(savedTheme === "dark");
     };
 
-    
     handleThemeChange();
 
-    
     const cookieCheckInterval = setInterval(() => {
       handleThemeChange();
     }, 1000);
@@ -39,7 +36,6 @@ const Dashboard = () => {
       }
     };
   }, []);
-
   
   useEffect(() => {
     if (token) {
@@ -98,7 +94,6 @@ const Dashboard = () => {
       }
     };
   }, [films]);
-
   
   const newReleases = films
     .filter((film) => {
@@ -136,7 +131,6 @@ const Dashboard = () => {
       }, 6000);
     }
   };
-
   
   const handleNavigateToFilm = (slug, event) => {
     event.preventDefault();
@@ -304,7 +298,6 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
-            {/* New Releases Slider Section with theme support */}
             <div className="mb-24">
               <div className="flex justify-between items-center mb-10">
                 <h2 className={`text-4xl font-bold flex items-center ${
@@ -333,18 +326,15 @@ const Dashboard = () => {
                     <div className={`absolute top-0 left-0 w-full h-full ${
                       isDarkMode ? "bg-yellow-500" : "bg-yellow-600"
                     } opacity-5 z-0`}></div>
-                    {/* Accent curved elements */}
                     <div className={`absolute -top-32 -right-32 w-64 h-64 ${
                       isDarkMode ? "bg-yellow-500" : "bg-yellow-600"
                     } opacity-10 rounded-full blur-3xl`}></div>
                     <div className={`absolute -bottom-32 -left-32 w-64 h-64 ${
                       isDarkMode ? "bg-yellow-500" : "bg-yellow-600"} opacity-10 rounded-full blur-3xl`}></div>
                   </div>
-                  
-                  {/* Main slider content with curved elements */}
+
                   <div className="relative px-8 py-10 rounded-3xl overflow-hidden backdrop-blur-sm">
                     <div className="flex justify-between gap-8 items-center">
-                      {/* Navigation arrows */}
                       <button 
                         onClick={handlePrevSlide}
                         className={`hidden md:flex absolute left-4 z-20 w-12 h-12 rounded-full ${
@@ -367,7 +357,6 @@ const Dashboard = () => {
                         <FaChevronRight />
                       </button>
                       
-                      {/* Movie poster (curved) */}
                       <div className="h-full w-full md:w-1/3 relative z-10">
                         {newReleases.map((film, index) => (
                           <div
@@ -397,7 +386,6 @@ const Dashboard = () => {
                         ))}
                       </div>
                       
-                      {/* Movie details (curved container) */}
                       <div className="h-full w-full md:w-2/3 relative z-10">
                         {newReleases.map((film, index) => (
                           <div
@@ -474,7 +462,6 @@ const Dashboard = () => {
                     </div>
                   </div>
                   
-                  {/* Pagination dots */}
                   <div className="flex justify-center mt-4 space-x-2">
                     {newReleases.map((_, index) => (
                       <button
@@ -501,7 +488,6 @@ const Dashboard = () => {
               )}
             </div>
 
-            {/* Category headings with theme support */}
             <div className="mb-24">
               <h2 className={`text-4xl font-semibold mb-10 flex items-center ${
                 isDarkMode ? "text-yellow-400" : "text-yellow-600"
@@ -524,7 +510,6 @@ const Dashboard = () => {
               )}
             </div>
 
-            {/* Series Cards */}
             <div className="mb-24">
               <h2 className={`text-4xl font-semibold mb-10 flex items-center ${
                 isDarkMode ? "text-yellow-400" : "text-yellow-600"
@@ -547,7 +532,6 @@ const Dashboard = () => {
               )}
             </div>
 
-            {/* Anime Cards */}
             <div className="mb-24">
               <h2 className={`text-4xl font-semibold mb-10 flex items-center ${
                 isDarkMode ? "text-yellow-400" : "text-yellow-600"

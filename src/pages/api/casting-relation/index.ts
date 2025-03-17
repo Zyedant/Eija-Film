@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// Fungsi untuk mengambil user ID dari token JWT
 function getUserIdFromToken(req: NextApiRequest): string | null {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
@@ -35,7 +34,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Operasi GET untuk mendapatkan daftar casting relations
     if (req.method === 'GET') {
       const castingRelations = await prisma.castingRelation.findMany({
         include: {
@@ -47,7 +45,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(castingRelations);
     }
 
-    // Operasi POST untuk menambah casting relation baru
     if (req.method === 'POST') {
       const { filmId, castingId, role } = req.body;
 

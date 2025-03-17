@@ -23,7 +23,6 @@ const Navbar = () => {
   const profileRef = useRef(null);
 
   useEffect(() => {
-    // Check login status and user role
     const token = Cookies.get("token");
     const isLoggedIn = Cookies.get("isLoggedIn");
     setIsLoggedIn(token && isLoggedIn === "true");
@@ -39,12 +38,10 @@ const Navbar = () => {
       }
     }
 
-    // Cek role
     const userRole = Cookies.get("role");
     setIsAdmin(userRole === "ADMIN");
     setIsAuthor(userRole === "AUTHOR");
 
-    // Set user role for display
     if (userRole === "ADMIN") {
       setUserRole("Admin");
     } else if (userRole === "AUTHOR") {
@@ -53,7 +50,6 @@ const Navbar = () => {
       setUserRole("User");
     }
 
-    // Dark mode
     const savedTheme = Cookies.get("theme");
     if (savedTheme === "dark") {
       setIsDarkMode(true);
@@ -63,7 +59,6 @@ const Navbar = () => {
       document.documentElement.classList.remove("dark");
     }
 
-    // Fetch films
     const fetchFilms = async () => {
       try {
         const response = await fetch("/api/film");
@@ -77,7 +72,6 @@ const Navbar = () => {
 
     fetchFilms();
 
-    // Close profile dropdown when clicking outside
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
@@ -104,7 +98,7 @@ const Navbar = () => {
 
       const userData = await response.json();
       setUserName(userData.name);
-      setUserImage(userData.imageUrl); // Simpan imageUrl ke state
+      setUserImage(userData.imageUrl); 
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -119,7 +113,7 @@ const Navbar = () => {
       Cookies.remove("token");
       Cookies.remove("role");
       Cookies.remove("isLoggedIn");
-      Cookies.remove("userId"); // Hapus userId dari cookie
+      Cookies.remove("userId"); 
 
       setIsLoggedIn(false);
       setIsAdmin(false);
@@ -214,18 +208,9 @@ const Navbar = () => {
             >
               Film List
             </Link>
-            <Link
-              href="/bookmarks"
-              className={`${
-                isDarkMode ? "hover:text-yellow-300" : "hover:text-yellow-600"
-              } transition duration-300 font-medium`}
-            >
-              Bookmarks
-            </Link>
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* Search Icon for toggling */}
             {!isSearchActive && (
               <button onClick={toggleSearch} className="p-2 relative">
                 <FaSearch
@@ -235,7 +220,6 @@ const Navbar = () => {
               </button>
             )}
 
-            {/* Search Bar with Icon to close */}
             {isSearchActive && (
               <div
                 className={`fixed inset-0 z-50 bg-opacity-80 ${isDarkMode ? "bg-gray-900" : "bg-gray-100"} flex flex-col items-center`}
@@ -259,7 +243,6 @@ const Navbar = () => {
                   </button>
                 </div>
 
-                {/* Search Results */}
                 {searchQuery && (
                   <div className={`w-3/4 md:w-1/2 mt-4 max-h-96 overflow-y-auto rounded-lg ${isDarkMode ? "bg-gray-800" : "bg-white"} shadow-xl`}>
                     {filteredFilms.length > 0 ? (
@@ -298,7 +281,6 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Toggle Theme Button */}
             <button
               onClick={toggleTheme}
               className={`${
@@ -342,7 +324,6 @@ const Navbar = () => {
                   } ${isProfileOpen ? "transform rotate-180" : ""} transition-transform duration-200`} />
                 </button>
                 
-                {/* Profile Dropdown */}
                 {isProfileOpen && (
                   <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${
                     isDarkMode ? "bg-gray-800" : "bg-white"
@@ -363,7 +344,6 @@ const Navbar = () => {
                     >
                       Profile
                     </Link>
-                    {/* Admin Link */}
                     {isAdmin && (
                       <Link
                         href="/admin"
@@ -375,7 +355,6 @@ const Navbar = () => {
                         Admin
                       </Link>
                     )}
-                    {/* Author Link */}
                     {isAuthor && (
                       <Link
                         href="/author"
@@ -414,7 +393,6 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Logout Confirmation Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className={`${

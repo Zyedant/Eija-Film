@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FaTachometerAlt, FaUsers, FaBars, FaCaretDown, FaVideo, FaUserAlt, FaTag, FaComment } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
-import Cookies from "js-cookie"; // Ensure the correct import
+import Cookies from "js-cookie"; 
 
 const AdminSidebar = ({ 
   onUsersClick, 
@@ -17,13 +17,12 @@ const AdminSidebar = ({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isGenreDropdownOpen, setIsGenreDropdownOpen] = useState(false);
   const [isCastingDropdownOpen, setIsCastingDropdownOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false); // State to store admin role
+  const [isAdmin, setIsAdmin] = useState(false); 
 
-  // Effect hook to handle client-side logic
   useEffect(() => {
-    const role = Cookies.get("role"); // Get role from cookies
-    setIsAdmin(role === "ADMIN"); // Set isAdmin based on role
-  }, []); // Only run once on mount
+    const role = Cookies.get("role"); 
+    setIsAdmin(role === "ADMIN"); 
+  }, []); 
 
   const isActive = (page) => currentPage === page;
 
@@ -93,7 +92,7 @@ const AdminSidebar = ({
         {isAdmin && (
           <li>
             <button
-              onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)} // Toggle genre dropdown
+              onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)} 
               className={`flex items-center space-x-3 p-3 rounded-md hover:bg-yellow-600 hover:text-white transition duration-300 w-full
                 ${isActive("genre") || isActive("genre-relation") ? 'bg-yellow-500 text-white' : ''}`}
             >
@@ -127,11 +126,10 @@ const AdminSidebar = ({
           </li>
         )}
 
-        {/* Dropdown for Casting - Only visible to Admin */}
         {isAdmin && (
           <li>
             <button
-              onClick={() => setIsCastingDropdownOpen(!isCastingDropdownOpen)} // Toggle casting dropdown
+              onClick={() => setIsCastingDropdownOpen(!isCastingDropdownOpen)}
               className={`flex items-center space-x-3 p-3 rounded-md hover:bg-yellow-600 hover:text-white transition duration-300 w-full
                 ${isActive("casting") || isActive("casting-relation") ? 'bg-yellow-500 text-white' : ''}`}
             >

@@ -12,7 +12,7 @@ const Navbar = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const [userImage, setUserImage] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false); // State untuk modal logout
+  const [isModalOpen, setIsModalOpen] = useState(false); 
   const router = useRouter();
   const profileRef = useRef(null);
 
@@ -26,7 +26,6 @@ const Navbar = () => {
       document.documentElement.classList.remove("dark");
     }
 
-    // Fetch user data if logged in
     const token = Cookies.get("token");
     const isLoggedIn = Cookies.get("isLoggedIn");
     if (token && isLoggedIn === "true") {
@@ -40,7 +39,6 @@ const Navbar = () => {
       }
     }
 
-    // Close profile dropdown when clicking outside
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
@@ -67,7 +65,7 @@ const Navbar = () => {
 
       const userData = await response.json();
       setUserName(userData.name);
-      setUserImage(userData.imageUrl); // Simpan imageUrl ke state
+      setUserImage(userData.imageUrl);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
@@ -89,13 +87,11 @@ const Navbar = () => {
     const query = e.target.value;
     setSearchQuery(query);
   
-    // Ambil path saat ini tanpa query
     const currentPath = router.pathname;
   
-    // Push ke path yang sama dengan query search
     router.push({
-      pathname: currentPath, // Tetap di path yang sama
-      query: { ...router.query, search: query }, // Tambahkan atau update query search
+      pathname: currentPath,
+      query: { ...router.query, search: query },
     });
   };
 
@@ -119,7 +115,7 @@ const Navbar = () => {
     if (response.ok) {
       Cookies.remove("token");
       Cookies.remove("isLoggedIn");
-      Cookies.remove("userId"); // Hapus userId dari cookie
+      Cookies.remove("userId"); 
 
       router.push("/auth/login");
     } else {
@@ -141,7 +137,6 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center space-x-6 ml-4">
-        {/* Toggle Theme Button */}
         <button
           onClick={toggleTheme}
           className={`${
@@ -155,7 +150,6 @@ const Navbar = () => {
           )}
         </button>
 
-        {/* Profile Dropdown */}
         <div className="relative" ref={profileRef}>
           <button
             onClick={toggleProfileDropdown}
@@ -166,7 +160,7 @@ const Navbar = () => {
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-500 shadow-md">
               {userImage ? (
                 <img
-                  src={userImage} // Gunakan imageUrl dari state
+                  src={userImage} 
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
@@ -185,7 +179,6 @@ const Navbar = () => {
             } ${isProfileOpen ? "transform rotate-180" : ""} transition-transform duration-200`} />
           </button>
 
-          {/* Profile Dropdown Menu */}
           {isProfileOpen && (
             <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${
               isDarkMode ? "bg-gray-800" : "bg-white"
@@ -216,7 +209,7 @@ const Navbar = () => {
                 Dashboard
               </Link>
               <button
-                onClick={openModal} // Buka modal saat tombol logout diklik
+                onClick={openModal} 
                 className={`block w-full text-left px-4 py-2 text-sm ${
                   isDarkMode ? "text-red-400 hover:bg-gray-700" : "text-red-600 hover:bg-gray-100"
                 } transition duration-150`}
@@ -228,7 +221,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Logout Confirmation Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className={`${

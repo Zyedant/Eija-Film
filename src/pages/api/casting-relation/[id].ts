@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// Fungsi untuk mengambil user ID dari token JWT
 function getUserIdFromToken(req: NextApiRequest): string | null {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
@@ -42,7 +41,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === 'GET') {
-      // Handle GET request for a single casting relation by ID
       const castingRelation = await prisma.castingRelation.findUnique({
         where: { id: String(id) },
         include: {
@@ -57,10 +55,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PUT') {
-      // Handle PUT request to update a casting relation
       const { filmId, castingId, role } = req.body;
 
-      // Validasi input castingData
       if (!filmId || !castingId || !role) {
         return res.status(400).json({ error: 'Film ID, Casting ID, dan Role diperlukan' });
       }
@@ -77,7 +73,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'DELETE') {
-      // Handle DELETE request to remove a casting relation
       await prisma.castingRelation.delete({
         where: { id: String(id) },
       });

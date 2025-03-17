@@ -19,7 +19,6 @@ export default async function handler(
   }
 
   try {
-    // Find the password reset token
     const passwordReset = await prisma.passwordReset.findFirst({
       where: {
         token,
@@ -37,10 +36,8 @@ export default async function handler(
       return res.status(400).json({ message: 'Invalid or expired token' });
     }
 
-    // Hash new password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Update user password
     await prisma.user.update({
       where: {
         id: passwordReset.userId
@@ -50,7 +47,6 @@ export default async function handler(
       }
     });
 
-    // Mark token as used
     await prisma.passwordReset.update({
       where: {
         id: passwordReset.id

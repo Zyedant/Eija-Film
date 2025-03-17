@@ -20,29 +20,23 @@ export default async function handler(
   }
 
   try {
-    // Check if user exists
     const user = await prisma.user.findUnique({
       where: { email }
     });
 
     if (!user) {
-      // Don't reveal if user exists or not for security reasons
       return res.status(200).json({ message: 'If your email is in our system, you will receive a password reset link' });
     }
 
-    // Generate random token
     const token = randomBytes(32).toString('hex');
     
-    // Set expiration time (1 hour from now)
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1);
 
-    // Delete any existing password reset tokens for this user
     await prisma.passwordReset.deleteMany({
       where: { userId: user.id }
     });
 
-    // Create password reset token
     await prisma.passwordReset.create({
       data: {
         userId: user.id,
@@ -52,9 +46,7 @@ export default async function handler(
       }
     });
 
-    // Send email with reset link
     const transporter = nodemailer.createTransport({
-      // Configure your email service here
       host: process.env.MAIL_HOST,
       port: Number(process.env.MAIL_PORT),
       secure: process.env.MAIL_SECURE === 'true',

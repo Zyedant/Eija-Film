@@ -104,7 +104,6 @@ const AdminDashboard = ({ showManageUsers }) => {
       {showManageUsers && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">User Management</h2>
-          {/* User management component would go here */}
         </div>
       )}
     </main>

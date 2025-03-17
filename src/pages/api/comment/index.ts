@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
-// Function to get userId from JWT token
 function getUserIdFromToken(req: NextApiRequest): string | null {
   const authHeader = req.headers.authorization;
   const tokenFromHeader = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
@@ -52,7 +51,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       if (filmId) {
-        // If filmId is provided, filter comments by filmId
         const comments = await prisma.comment.findMany({
           where: { 
             filmId: String(filmId)
@@ -67,7 +65,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
         return res.status(200).json(comments);
       } else {
-        // If no filmId, return user's comments
         const comments = await prisma.comment.findMany({
           where: { userId },
           include: {
@@ -79,7 +76,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // POST operation to add a new comment
     if (req.method === 'POST') {
       const { filmId, content, userId } = req.body;
 
@@ -87,7 +83,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Film ID and content are required' });
       }
 
-      // Check if user already commented on this film
       const existingComment = await prisma.comment.findFirst({
         where: {
           userId,
@@ -113,7 +108,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(201).json(newComment);
     }
 
-    // If other methods
     return res.status(405).json({ error: 'Method Not Allowed' });
   } catch (error) {
     console.error('Error handling API request:', error);

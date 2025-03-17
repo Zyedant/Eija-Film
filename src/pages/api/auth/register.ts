@@ -1,4 +1,3 @@
-// api/auth/register.ts
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
@@ -12,7 +11,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      // Cek apakah email sudah terdaftar
       const existingUser = await prisma.user.findUnique({
         where: { email },
       });
@@ -21,10 +19,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ message: 'Email already exists' });
       }
 
-      // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Buat user baru
       const newUser = await prisma.user.create({
         data: {
           name,

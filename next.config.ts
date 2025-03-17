@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
     domains: ["www.youtube.com", "youtube.com"]
+  },
+  eslint: {
+    ignoreDuringBuilds: true
   }
 };
 

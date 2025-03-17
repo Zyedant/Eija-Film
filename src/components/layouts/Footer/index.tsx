@@ -16,17 +16,14 @@ const Footer = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   useEffect(() => {
-    // Check theme from cookies
     const savedTheme = Cookies.get("theme");
     setIsDarkMode(savedTheme === "dark");
     
-    // Listen for theme changes
     const checkTheme = () => {
       const currentTheme = Cookies.get("theme");
       setIsDarkMode(currentTheme === "dark");
     };
     
-    // Set interval to check for theme changes
     const themeInterval = setInterval(checkTheme, 1000);
     
     return () => clearInterval(themeInterval);
@@ -38,10 +35,8 @@ const Footer = () => {
         ? "bg-black text-white border-t border-gray-800" 
         : "bg-white text-gray-800 border-t border-gray-200"
     } transition-colors duration-300`}>
-      {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto py-12 px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {/* About Section */}
           <div>
             <h3 className={`text-2xl font-bold mb-4 ${
               isDarkMode 
@@ -85,7 +80,6 @@ const Footer = () => {
             </div>
           </div>
           
-          {/* Help & Support */}
           <div>
             <h3 className={`text-xl font-bold mb-4 ${
               isDarkMode ? "text-yellow-500" : "text-yellow-700"
@@ -139,7 +133,6 @@ const Footer = () => {
             </ul>
           </div>
           
-          {/* Contact Info */}
           <div>
             <h3 className={`text-xl font-bold mb-4 ${
               isDarkMode ? "text-yellow-500" : "text-yellow-700"
@@ -176,7 +169,6 @@ const Footer = () => {
         </div>
       </div>
       
-      {/* Copyright Section */}
       <div className={`${
         isDarkMode ? "border-t border-gray-800" : "border-t border-gray-200"
       } py-6`}>
