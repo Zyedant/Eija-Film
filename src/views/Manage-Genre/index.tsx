@@ -25,26 +25,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const GenreForm = ({ onSaveGenre, onCancel, genreToEdit }) => {
+interface Genre {
+  id: string;
+  name: string;
+  userId: string;
+}
+
+interface GenreFormProps {
+  onSaveGenre: (genre: Genre) => void;
+  onCancel: () => void;
+  genreToEdit?: Genre;
+}
+
+const GenreForm: React.FC<GenreFormProps> = ({ onSaveGenre, onCancel, genreToEdit }) => {
   const [name, setName] = useState(genreToEdit ? genreToEdit.name : "");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const token = Cookies.get('token'); 
+    const token = Cookies.get('token');
     
     if (!token) {
       console.error("User tidak ditemukan atau belum login.");
       return;
     }
   
-    
     try {
-      const decoded = jwt.decode(token);
+      const decoded = jwt.decode(token) as { id: string } | null;
+      if (!decoded) {
+        console.error("Token tidak valid.");
+        return;
+      }
+
       const userId = decoded.id;
   
-      const updatedGenre = {
-        id: genreToEdit ? genreToEdit.id : null,
+      const updatedGenre: Genre = {
+        id: genreToEdit ? genreToEdit.id : "",
         userId,
         name,
       };
@@ -103,13 +119,13 @@ const GenreForm = ({ onSaveGenre, onCancel, genreToEdit }) => {
   );
 };
 
-const ManageGenre = () => {
-  const [genres, setGenres] = useState([]);
+const ManageGenre: React.FC = () => {
+  const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [genreToEdit, setGenreToEdit] = useState(null);
+  const [genreToEdit, setGenreToEdit] = useState<Genre | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false); 
-  const [genreToDelete, setGenreToDelete] = useState(null); 
+  const [genreToDelete, setGenreToDelete] = useState<string | null>(null); 
   const [itemsPerPage, setItemsPerPage] = useState(10); 
   const [currentPage, setCurrentPage] = useState(1); 
   const router = useRouter();
@@ -120,8 +136,11 @@ const ManageGenre = () => {
     const fetchGenres = async () => {
       try {
         const token = Cookies.get('token');
-        
-        
+        if (!token) {
+          router.push('/login');
+          return;
+        }
+
         const response = await axios.get("/api/genre", {
           headers: {
             Authorization: `Bearer ${token}`
@@ -135,25 +154,24 @@ const ManageGenre = () => {
     };
 
     fetchGenres();
-  }, []);
+  }, [router]);
 
-  
+  const searchQuery = Array.isArray(search) ? search[0] : search || "";
   const filteredGenres = genres.filter(
-    (genre) => genre.name.toLowerCase().includes((search || "").toLowerCase())
+    (genre) => genre.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  
   const totalItems = filteredGenres.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentGenres = filteredGenres.slice(startIndex, endIndex);
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (value) => {
+  const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(Number(value));
     setCurrentPage(1); 
   };
@@ -175,7 +193,7 @@ const ManageGenre = () => {
     }
   };
 
-  const handleEditGenre = (genre) => {
+  const handleEditGenre = (genre: Genre) => {
     setGenreToEdit(genre);
     setShowForm(true);
   };
@@ -185,7 +203,7 @@ const ManageGenre = () => {
     setGenreToEdit(null);
   };
 
-  const handleSaveGenre = (genreToSave) => {
+  const handleSaveGenre = (genreToSave: Genre) => {
     if (genreToEdit) {
       setGenres((prevGenres) =>
         prevGenres.map((g) => (g.id === genreToSave.id ? genreToSave : g))
@@ -203,7 +221,7 @@ const ManageGenre = () => {
         <GenreForm 
           onSaveGenre={handleSaveGenre} 
           onCancel={handleCancelEdit} 
-          genreToEdit={genreToEdit} 
+          genreToEdit={genreToEdit || undefined} 
         />
       ) : (
         <>
@@ -217,7 +235,7 @@ const ManageGenre = () => {
           </div>
 
           {filteredGenres.length === 0 && (
-            <Alert variant="warning" className="mb-4">
+            <Alert variant="destructive" className="mb-4">
               Tidak ada genre untuk ditampilkan.
             </Alert>
           )}

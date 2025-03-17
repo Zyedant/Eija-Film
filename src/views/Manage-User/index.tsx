@@ -25,21 +25,29 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  isActive: boolean;
+  imageUrl?: string;
+}
 
-const UserForm = ({ onSaveUser, onCancel, userToEdit }) => {
+const UserForm = ({ onSaveUser, onCancel, userToEdit }: { onSaveUser: (user: User) => void, onCancel: () => void, userToEdit?: User }) => {
   const [name, setName] = useState(userToEdit ? userToEdit.name : "");
   const [email, setEmail] = useState(userToEdit ? userToEdit.email : "");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(userToEdit ? userToEdit.role : "USER");
   const [isActive, setIsActive] = useState(userToEdit ? userToEdit.isActive : true);
   const [imageUrl, setImageUrl] = useState(userToEdit ? userToEdit.imageUrl : "");
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     let uploadedImageUrl = imageUrl;
 
-    
     if (imageFile) {
       const formData = new FormData();
       formData.append("file", imageFile);
@@ -59,8 +67,8 @@ const UserForm = ({ onSaveUser, onCancel, userToEdit }) => {
       }
     }
 
-    const updatedUser = {
-      id: userToEdit ? userToEdit.id : null,
+    const updatedUser: User = {
+      id: userToEdit ? userToEdit.id : "",
       name,
       email,
       password,
@@ -141,7 +149,7 @@ const UserForm = ({ onSaveUser, onCancel, userToEdit }) => {
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
           <select
-            value={isActive}
+            value={isActive.toString()}
             onChange={(e) => setIsActive(e.target.value === "true")}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
@@ -155,7 +163,12 @@ const UserForm = ({ onSaveUser, onCancel, userToEdit }) => {
           <input
             type="file"
             accept="image/*"
-            onChange={(e) => setImageFile(e.target.files[0])}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setImageFile(file);
+              }
+            }}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           />
         </div>
@@ -174,14 +187,14 @@ const UserForm = ({ onSaveUser, onCancel, userToEdit }) => {
 };
 
 const ManageUser = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [userToEdit, setUserToEdit] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -198,7 +211,7 @@ const ManageUser = () => {
           return;
         }
 
-        const decoded = jwt.decode(token);
+        const decoded = jwt.decode(token) as { role: string; id: string };
         if (!decoded) {
           router.push('/login');
           return;
@@ -232,7 +245,7 @@ const ManageUser = () => {
         if (isAdmin) {
           setUsers(userResponse.data);
         } else {
-          const userData = userResponse.data.filter(user => user.id === currentUser.id);
+          const userData = userResponse.data.filter((user: User) => user.id === currentUser.id);
           setUsers(userData);
         }
 
@@ -248,10 +261,11 @@ const ManageUser = () => {
     }
   }, [currentUser, isAdmin]);
 
+  const searchQuery = Array.isArray(search) ? search[0] : search || "";
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes((search || "").toLowerCase()) ||
-      user.email.toLowerCase().includes((search || "").toLowerCase())
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalItems = filteredUsers.length;
@@ -261,38 +275,38 @@ const ManageUser = () => {
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
 
   const handleDeleteUser = async () => {
-    if (!userToDelete || isDeleting) return; 
-  
+    if (!userToDelete || isDeleting) return;
+
     try {
-      setIsDeleting(true); 
-  
+      setIsDeleting(true);
+
       const token = Cookies.get('token');
-  
+
       if (!isAdmin) {
         const userToDeleteCheck = users.find(user => user.id === userToDelete);
-        if (userToDeleteCheck && userToDeleteCheck.id !== currentUser.id) {
+        if (userToDeleteCheck && userToDeleteCheck.id !== currentUser?.id) {
           console.error("Tidak memiliki izin untuk menghapus user ini.");
-          setIsDeleting(false); 
+          setIsDeleting(false);
           return;
         }
       }
-  
+
       await axios.delete(`/api/user/${userToDelete}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-  
+
       setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userToDelete));
       setShowDeleteDialog(false);
     } catch (error) {
       console.error("Gagal menghapus user", error);
     } finally {
-      setIsDeleting(false); 
+      setIsDeleting(false);
     }
-  };  
+  };
 
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: User) => {
     if (!isAdmin && user.id !== currentUser?.id) {
       console.error("Tidak memiliki izin untuk mengedit user ini.");
       return;
@@ -307,7 +321,7 @@ const ManageUser = () => {
     setUserToEdit(null);
   };
 
-  const handleSaveUser = (userToSave) => {
+  const handleSaveUser = (userToSave: User) => {
     if (userToEdit) {
       setUsers((prevUsers) =>
         prevUsers.map((u) => (u.id === userToSave.id ? userToSave : u))
@@ -319,11 +333,11 @@ const ManageUser = () => {
     setUserToEdit(null);
   };
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const handleItemsPerPageChange = (value) => {
+  const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(Number(value));
     setCurrentPage(1);
   };
@@ -342,7 +356,7 @@ const ManageUser = () => {
         <UserForm
           onSaveUser={handleSaveUser}
           onCancel={handleCancelEdit}
-          userToEdit={userToEdit}
+          userToEdit={userToEdit || undefined}
         />
       ) : (
         <>
@@ -358,7 +372,7 @@ const ManageUser = () => {
           </div>
 
           {filteredUsers.length === 0 && (
-            <Alert variant="warning" className="mb-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+            <Alert variant="destructive" className="mb-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
               Tidak ada pengguna untuk ditampilkan.
             </Alert>
           )}
@@ -394,8 +408,9 @@ const ManageUser = () => {
                           alt={user.name}
                           className="w-12 h-12 rounded-full object-cover"
                           onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = "/placeholder-user.png";
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null;
+                            target.src = "/placeholder-user.png";
                           }}
                         />
                       ) : (
@@ -406,11 +421,11 @@ const ManageUser = () => {
                       <Button onClick={() => handleEditUser(user)} className="bg-yellow-500 text-white mr-2">
                         <FaEdit />
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => {
                           setUserToDelete(user.id);
                           setShowDeleteDialog(true);
-                        }} 
+                        }}
                         className="bg-red-500 text-white"
                         disabled={isDeleting}
                       >
@@ -439,7 +454,7 @@ const ManageUser = () => {
               </Select>
               <span className="text-sm text-gray-600 dark:text-gray-400">data per halaman</span>
             </div>
-                        
+
             <div className="flex space-x-2">
               <Button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -464,7 +479,7 @@ const ManageUser = () => {
         <AlertDialogContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-gray-900 dark:text-gray-100">
-              Apakah Anda yakin??
+              Apakah Anda yakin?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
               Anda tidak dapat mengembalikan user yang telah dihapus!
@@ -474,8 +489,8 @@ const ManageUser = () => {
             <AlertDialogCancel className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600">
               Batal
             </AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteUser} 
+            <AlertDialogAction
+              onClick={handleDeleteUser}
               className="bg-red-500 text-white hover:bg-red-600 dark:hover:bg-red-600"
             >
               Hapus
