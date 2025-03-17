@@ -464,7 +464,7 @@ const ManageUser = () => {
         <AlertDialogContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-gray-900 dark:text-gray-100">
-              Apakah Anda yakin?
+              Apakah Anda yakin??
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 dark:text-gray-300">
               Anda tidak dapat mengembalikan user yang telah dihapus!
