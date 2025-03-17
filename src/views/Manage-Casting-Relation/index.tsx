@@ -25,7 +25,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Interface untuk tipe data
 interface User {
   id: string;
   name: string;

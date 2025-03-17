@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FaEdit, FaTrash, FaPlus, FaArrowLeft } from "react-icons/fa";
 import axios from "axios";
 import Cookies from 'js-cookie';
+import jwt from 'jsonwebtoken';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert } from "@/components/ui/alert";
@@ -36,6 +37,7 @@ interface GenreRelation {
   film: {
     id: string;
     title: string;
+    userId: string; 
   };
   genre: {
     id: string;
@@ -46,6 +48,7 @@ interface GenreRelation {
 interface Film {
   id: string;
   title: string;
+  userId: string; 
 }
 
 interface GenreRelationFormProps {
@@ -188,9 +191,37 @@ const ManageGenreRelation = () => {
   const [relationToDelete, setRelationToDelete] = useState<{ filmId: string; genreId: string } | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const router = useRouter();
 
   const { search } = router.query;
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = Cookies.get('token');
+        if (!token) {
+          router.push("/auth/login");
+          return;
+        }
+
+        const decoded = jwt.decode(token) as { id: string; role: string };
+        if (!decoded) {
+          router.push("/auth/login");
+          return;
+        }
+
+        setCurrentUserId(decoded.id);
+        setIsAdmin(decoded.role === "ADMIN");
+      } catch (error) {
+        console.error("Gagal mengambil data pengguna", error);
+        router.push("/auth/login");
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -211,7 +242,17 @@ const ManageGenreRelation = () => {
           }
         });
 
-        setGenreRelations(relationsResponse.data);
+        if (!isAdmin) {
+          const userFilms = filmsResponse.data.filter(film => film.userId === currentUserId);
+          const userFilmIds = userFilms.map(film => film.id);
+          const filteredRelations = relationsResponse.data.filter(relation => 
+            userFilmIds.includes(relation.filmId)
+          );
+          setGenreRelations(filteredRelations);
+        } else {
+          setGenreRelations(relationsResponse.data);
+        }
+
         setLoading(false);
       } catch (error) {
         console.error("Gagal mengambil data", error);
@@ -219,8 +260,10 @@ const ManageGenreRelation = () => {
       }
     };
 
-    fetchData();
-  }, []);
+    if (currentUserId) {
+      fetchData();
+    }
+  }, [currentUserId, isAdmin]);
 
   const groupedRelations = genreRelations.reduce((acc, relation) => {
     if (!acc[relation.filmId]) {
@@ -242,7 +285,6 @@ const ManageGenreRelation = () => {
       return item.film.title.toLowerCase().includes((searchString || "").toLowerCase());
     }
   );
-  
 
   const totalItems = filteredFilmsWithGenres.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -260,6 +302,11 @@ const ManageGenreRelation = () => {
   };
 
   const handleManageGenres = (film: Film) => {
+    if (!isAdmin && film.userId !== currentUserId) {
+      console.error("Anda tidak memiliki izin untuk mengelola genre film ini.");
+      return;
+    }
+
     const existingGenres = genreRelations
       .filter((relation) => relation.filmId === film.id)
       .map((relation) => relation.genre.id);
@@ -267,6 +314,7 @@ const ManageGenreRelation = () => {
     setSelectedFilm({
       id: film.id,
       title: film.title,
+      userId: film.userId
     });
     setShowForm(true);
   };
@@ -348,9 +396,11 @@ const ManageGenreRelation = () => {
                   <SelectValue placeholder="Pilih Film" />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600">
-                  {films.map(film => (
-                    <SelectItem key={film.id} value={film.id}>{film.title}</SelectItem>
-                  ))}
+                  {films
+                    .filter(film => isAdmin || film.userId === currentUserId) 
+                    .map(film => (
+                      <SelectItem key={film.id} value={film.id}>{film.title}</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             )}
