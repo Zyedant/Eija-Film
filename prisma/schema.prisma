@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String           @id @default(cuid())
+  name              String
+  email             String           @unique
+  password          String
+  imageUrl          String?
+  role              Role
+  isActive          Boolean
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  filmsCreated      Film[]           @relation("UserFilms")
+  commentsWritten   Comment[]
+  ratingsGiven      Rating[]
+  passwordResets    PasswordReset[]
+  bookmarks         Bookmark[]
+}
+
+enum Role {
+  ADMIN
+  AUTHOR
+  USER
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String
+  isUsed    Boolean
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Film {
+  id                String            @id @default(cuid()) @map("id_film")
+  userId            String  
+  user              User              @relation("UserFilms", fields: [userId], references: [id])
+  title             String  
+  slug              String  
+  description       String            @db.LongText
+  posterUrl         String  
+  trailerUrl        String  
+  duration          Int 
+  episode           Int?
+  releaseYear       Int 
+  avgRating         Decimal           @default(0.0)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  castingRelations  CastingRelation[]
+  genreRelations    GenreRelation[]
+  comments          Comment[]
+  ratings           Rating[]
+  bookmarks         Bookmark[]
+  category          Category          
+}
+
+enum Category {
+  MOVIE
+  SERIES
+  ANIME
+}
+
+model Casting {
+  id              String   @id @default(cuid()) @map("id_casting")
+  realName        String
+  stageName       String?
+  photoUrl        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  castingRelation CastingRelation[]
+}
+
+model CastingRelation {
+  id            String   @id @default(cuid()) @map("id_casting_relation")
+  filmId        String
+  film          Film     @relation(fields: [filmId], references: [id])
+  castingId   String   
+  casting       Casting  @relation(fields: [castingId], references: [id])
+  role          String   
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Genre {
+  id             String           @id @default(cuid()) @map("id_genre")
+  name           String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  genreRelation  GenreRelation[]
+}
+
+model GenreRelation {
+  id        String   @id @default(cuid())
+  filmId    String
+  film      Film     @relation(fields: [filmId], references: [id])
+  genreId   String      
+  genre     Genre    @relation(fields: [genreId], references: [id])  
+  createdAt DateTime @default(now())
+}
+
+model Comment {
+  id          String         @id @default(cuid()) @map("id_comment")
+  userId      String
+  filmId      String
+  user        User           @relation(fields: [userId], references: [id])
+  film        Film           @relation(fields: [filmId], references: [id])
+  content     String
+  rating      Rating[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Rating {
+  id        String   @id @default(cuid()) @map("id_rating")
+  userId    String
+  filmId    String
+  commentId String
+  user      User     @relation(fields: [userId], references: [id])
+  film      Film     @relation(fields: [filmId], references: [id])
+  score     Int
+  comment   Comment  @relation(fields: [commentId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bookmark {
+  id        String        @id @default(cuid())
+  userId    String
+  filmId    String
+  user      User          @relation(fields: [userId], references: [id])
+  film      Film          @relation(fields: [filmId], references: [id])
+  createdAt DateTime      @default(now())
+}

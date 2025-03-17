@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `film` MODIFY `category` ENUM('MOVIE', 'SERIES', 'ANIME') NOT NULL DEFAULT 'MOVIE';
