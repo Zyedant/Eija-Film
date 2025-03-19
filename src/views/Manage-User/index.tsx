@@ -29,6 +29,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  telephone: string;
   password: string;
   role: string;
   isActive: boolean;
@@ -38,6 +39,7 @@ interface User {
 const UserForm = ({ onSaveUser, onCancel, userToEdit }: { onSaveUser: (user: User) => void, onCancel: () => void, userToEdit?: User }) => {
   const [name, setName] = useState(userToEdit ? userToEdit.name : "");
   const [email, setEmail] = useState(userToEdit ? userToEdit.email : "");
+  const [telephone, setTelephone] = useState(userToEdit ? userToEdit.telephone : "");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(userToEdit ? userToEdit.role : "USER");
   const [isActive, setIsActive] = useState(userToEdit ? userToEdit.isActive : true);
@@ -71,6 +73,7 @@ const UserForm = ({ onSaveUser, onCancel, userToEdit }: { onSaveUser: (user: Use
       id: userToEdit ? userToEdit.id : "",
       name,
       email,
+      telephone,
       password,
       role,
       isActive,
@@ -121,6 +124,16 @@ const UserForm = ({ onSaveUser, onCancel, userToEdit }: { onSaveUser: (user: Use
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Telephone</label>
+          <input
+            type="telephone"
+            value={telephone}
+            onChange={(e) => setTelephone(e.target.value)}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             required
           />
@@ -383,6 +396,7 @@ const ManageUser = () => {
                 <TableRow className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white dark:bg-gradient-to-r dark:from-yellow-600 dark:via-yellow-700 dark:to-yellow-800">
                   <TableCell className="py-3 px-4 text-left font-semibold">Nama</TableCell>
                   <TableCell className="py-3 px-4 text-left font-semibold">Email</TableCell>
+                  <TableCell className="py-3 px-4 text-left font-semibold">Telephone</TableCell>
                   <TableCell className="py-3 px-4 text-left font-semibold">Role</TableCell>
                   <TableCell className="py-3 px-4 text-left font-semibold">Status</TableCell>
                   <TableCell className="py-3 px-4 text-left font-semibold">Gambar</TableCell>
@@ -395,6 +409,7 @@ const ManageUser = () => {
                   <TableRow key={user.id} className="dark:text-white text-black">
                     <TableCell className="py-3 px-4">{user.name}</TableCell>
                     <TableCell className="py-3 px-4">{user.email}</TableCell>
+                    <TableCell className="py-3 px-4">{user.telephone}</TableCell>
                     <TableCell className="py-3 px-4">{user.role}</TableCell>
                     <TableCell className="py-3 px-4">
                       <span className={`text-sm ${user.isActive ? "text-green-500 dark:text-green-400" : "text-red-500 dark:text-red-400"}`}>

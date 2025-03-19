@@ -26,14 +26,6 @@ function getUserIdFromToken(req: NextApiRequest): string | null {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const userId = getUserIdFromToken(req);
-    if (!userId) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'You need to be logged in to perform this action.',
-      });
-    }
-
     if (req.method === 'GET') {
       const { filmId, showAll } = req.query;
 
@@ -41,59 +33,72 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const comments = await prisma.comment.findMany({
           include: {
             user: true,
-            rating: true
+            rating: true,
           },
           orderBy: {
-            createdAt: 'desc'
-          }
+            createdAt: 'desc',
+          },
         });
         return res.status(200).json(comments);
       }
 
       if (filmId) {
         const comments = await prisma.comment.findMany({
-          where: { 
-            filmId: String(filmId)
+          where: {
+            filmId: String(filmId),
           },
           include: {
             user: true,
-            rating: true
+            rating: true,
           },
           orderBy: {
-            createdAt: 'desc'
-          }
+            createdAt: 'desc',
+          },
         });
         return res.status(200).json(comments);
       } else {
         const comments = await prisma.comment.findMany({
-          where: { userId },
           include: {
             user: true,
-            rating: true
-          }
+            rating: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
         });
         return res.status(200).json(comments);
       }
     }
 
-    if (req.method === 'POST') {
-      const { filmId, content, userId } = req.body;
+    const userId = getUserIdFromToken(req);
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Anda perlu login untuk melakukan tindakan ini.',
+      });
+    }
 
-      if (!filmId || !content || !userId) {
-        return res.status(400).json({ error: 'Film ID and content are required' });
+    if (req.method === 'POST') {
+      const { filmId, content } = req.body;
+
+      if (!filmId || !content) {
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'Film ID dan konten komentar diperlukan.',
+        });
       }
 
       const existingComment = await prisma.comment.findFirst({
         where: {
           userId,
-          filmId
-        }
+          filmId,
+        },
       });
 
       if (existingComment) {
-        return res.status(400).json({ 
-          error: 'Comment already exists',
-          message: 'You have already commented on this film. Please edit your existing comment.'
+        return res.status(400).json({
+          error: 'Bad Request',
+          message: 'Anda sudah memberikan komentar untuk film ini. Silakan edit komentar Anda yang sudah ada.',
         });
       }
 
@@ -101,27 +106,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: {
           userId,
           filmId,
-          content
+          content,
+        },
+        include: {
+          user: true, 
         },
       });
 
       return res.status(201).json(newComment);
     }
 
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    return res.status(405).json({
+      error: 'Method Not Allowed',
+      message: 'Metode HTTP tidak didukung.',
+    });
   } catch (error: unknown) {
+    console.error('Error handling API request:', error);
+
     if (error instanceof Error) {
-      console.error('Error handling API request:', error.message);
       return res.status(500).json({
         error: 'Internal Server Error',
-        message: error.message || 'An unexpected error occurred',
+        message: error.message || 'Terjadi kesalahan tak terduga.',
       });
     }
 
-    console.error('Unknown error', error);
     return res.status(500).json({
       error: 'Internal Server Error',
-      message: 'An unexpected error occurred',
+      message: 'Terjadi kesalahan tak terduga.',
     });
   }
 }

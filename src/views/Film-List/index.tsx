@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { FaFilter } from "react-icons/fa";
+import { FaFilter, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import Link from "next/link";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { FaRegClock, FaCalendarAlt, FaFilm, FaTv, FaRocket, FaPlay, FaStar } from "react-icons/fa";
 
 interface Genre {
   name: string;
@@ -17,6 +19,7 @@ interface Film {
   duration: number;
   genreRelations: { genre: Genre }[];
   slug: string;
+  createdAt: string;
 }
 
 const FilmList = () => {
@@ -30,8 +33,22 @@ const FilmList = () => {
   const [selectedReleaseYear, setSelectedReleaseYear] = useState<string>(""); 
   const [isLoading, setIsLoading] = useState<boolean>(true); 
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false); 
-
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const savedTheme = localStorage.getItem("theme");
+      setIsDarkMode(savedTheme === "dark");
+    };
+
+    handleThemeChange();
+    window.addEventListener("storage", handleThemeChange);
+
+    return () => {
+      window.removeEventListener("storage", handleThemeChange);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchFilms = async () => {
@@ -40,7 +57,6 @@ const FilmList = () => {
       try {
         const response = await fetch("/api/film");
         const data: Film[] = await response.json();
-        console.log(data);
         setFilms(data);
         setFilteredFilms(data);
 
@@ -53,7 +69,6 @@ const FilmList = () => {
         ];
 
         const allCategories = [...new Set(data.map((film) => film.category))];
-
         const allReleaseYears = [...new Set(data.map((film) => film.releaseYear))];
 
         setGenres(allGenres);
@@ -102,17 +117,131 @@ const FilmList = () => {
     setIsFilterOpen(!isFilterOpen);
   };
 
+  const navigateToFilm = (slug: string) => router.push(`/film/${slug}`);
+
+  const FilmCard = ({ film }: { film: Film }) => (
+    <Card 
+      className={`relative overflow-hidden transform transition-all duration-500 ease-in-out hover:scale-105 hover:shadow-lg rounded-lg shadow-xl h-full flex flex-col ${
+        isDarkMode 
+          ? "bg-gradient-to-br from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 border border-gray-700" 
+          : "bg-gradient-to-br from-white to-gray-100 hover:from-gray-50 hover:to-white border border-gray-200"
+      }`}
+    >
+      <div 
+        className="relative w-full aspect-[2/3] overflow-hidden cursor-pointer group"
+        onClick={() => navigateToFilm(film.slug)}
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10 opacity-40"></div>
+        <img
+          src={film.posterUrl}
+          alt={film.title}
+          className="w-full h-full object-cover rounded-t-lg transform transition-all duration-500 ease-in-out group-hover:scale-110"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+          <button
+            className="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold p-3 rounded-full transform transition-all duration-300 hover:scale-110"
+          >
+            <FaPlay />
+          </button>
+        </div>
+      </div>
+      
+      <div 
+        className={`flex-1 p-4 flex flex-col justify-between ${
+          isDarkMode 
+            ? "bg-gradient-to-b from-gray-900 to-gray-800" 
+            : "bg-gradient-to-b from-gray-50 to-white"
+        }`}
+      >
+        <div>
+          <h3 className={`text-xl font-semibold truncate ${
+            isDarkMode ? "text-yellow-400" : "text-yellow-600"
+          }`}>
+            {film.title}
+          </h3>
+          
+          <div className="flex mt-2 space-x-2">
+            {film.genreRelations && film.genreRelations.slice(0, 2).map((relation) => (
+              <span 
+                key={relation.genre.name} 
+                className={`px-2 py-1 text-xs rounded-full ${
+                  isDarkMode 
+                    ? "bg-gray-800 text-yellow-400 border border-gray-700" 
+                    : "bg-gray-100 text-yellow-600 border border-gray-200"
+                }`}
+              >
+                {relation.genre.name}
+              </span>
+            ))}
+          </div>
+          
+          <p className={`text-sm mt-2 h-12 line-clamp-2 ${
+            isDarkMode ? "text-gray-300" : "text-gray-600"
+          }`}>
+            {film.description.length > 50 ? `${film.description.substring(0, 50)}...` : film.description}
+          </p>
+        </div>
+      </div>
+      
+      <CardFooter 
+        className={`p-4 grid grid-cols-2 gap-2 items-center border-t ${
+          isDarkMode 
+            ? "bg-gray-900 text-gray-400 border-gray-800" 
+            : "bg-gray-50 text-gray-600 border-gray-200"
+        }`}
+      >
+        <div className="flex items-center space-x-2">
+          <FaCalendarAlt className={`${isDarkMode ? "text-yellow-500" : "text-yellow-600"} text-xs`} />
+          <p className="text-xs">{film.releaseYear}</p>
+        </div>
+        <div className="flex items-center space-x-2 justify-end">
+          <FaRegClock className={`${isDarkMode ? "text-yellow-500" : "text-yellow-600"} text-xs`} />
+          <p className="text-xs">{film.duration} mins</p>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-6">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700">
-          Film List
-        </h1>
+    <div className={`min-h-screen ${
+      isDarkMode 
+        ? "bg-gradient-to-b from-gray-800 to-gray-900 text-white"
+        : "bg-gradient-to-b from-gray-100 to-white text-gray-900"
+    }`}>
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="text-center mb-16">
+          <h1 className="text-6xl font-extrabold mb-6 relative inline-block">
+            <span 
+              className={`text-transparent bg-clip-text ${
+                isDarkMode 
+                  ? "bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-700"
+                  : "bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-800"
+              }`}
+            >
+              EijaFilm
+            </span>
+            <div 
+              className={`absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-24 h-1 ${
+                isDarkMode 
+                  ? "bg-gradient-to-r from-yellow-400 to-yellow-600"
+                  : "bg-gradient-to-r from-yellow-500 to-yellow-700"
+              }`}
+            >
+            </div>
+          </h1>
+          <p className={`text-xl ${isDarkMode ? "text-gray-300" : "text-gray-700"} max-w-2xl mx-auto`}>
+            Discover premium entertainment at your fingertips. Elegant. Exclusive. Exceptional.
+          </p>
+        </div>
 
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={toggleFilter}
-            className="p-2 bg-yellow-500 text-white rounded-md flex items-center space-x-2 hover:bg-yellow-600 transition"
+            className={`p-2 rounded-md flex items-center space-x-2 transition ${
+              isDarkMode 
+                ? "bg-gray-700 text-yellow-500 hover:bg-gray-600" 
+                : "bg-gray-200 text-yellow-600 hover:bg-gray-300"
+            }`}
           >
             <FaFilter />
             <span>Filters</span>
@@ -120,14 +249,24 @@ const FilmList = () => {
         </div>
 
         {isFilterOpen && (
-          <div className="mb-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg">
+          <div className={`mb-6 p-4 rounded-lg shadow-lg ${
+            isDarkMode 
+              ? "bg-gray-700" 
+              : "bg-gray-200"
+          }`}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block font-medium mb-2">Genre</label>
+                <label className={`block font-medium mb-2 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                }`}>Genre</label>
                 <select
                   value={selectedGenre}
                   onChange={(e) => setSelectedGenre(e.target.value)}
-                  className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-lg"
+                  className={`w-full p-2 rounded-lg ${
+                    isDarkMode 
+                      ? "bg-gray-800 text-gray-300 border-gray-700" 
+                      : "bg-white text-gray-700 border-gray-300"
+                  }`}
                 >
                   <option value="">All Genres</option>
                   {genres.map((genre) => (
@@ -139,11 +278,17 @@ const FilmList = () => {
               </div>
 
               <div>
-                <label className="block font-medium mb-2">Category</label>
+                <label className={`block font-medium mb-2 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                }`}>Category</label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-lg"
+                  className={`w-full p-2 rounded-lg ${
+                    isDarkMode 
+                      ? "bg-gray-800 text-gray-300 border-gray-700" 
+                      : "bg-white text-gray-700 border-gray-300"
+                  }`}
                 >
                   <option value="">All Categories</option>
                   {categories.map((category) => (
@@ -155,11 +300,17 @@ const FilmList = () => {
               </div>
 
               <div>
-                <label className="block font-medium mb-2">Release Year</label>
+                <label className={`block font-medium mb-2 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                }`}>Release Year</label>
                 <select
                   value={selectedReleaseYear}
                   onChange={(e) => setSelectedReleaseYear(e.target.value)}
-                  className="w-full p-2 bg-white dark:bg-gray-700 border border-gray-300 rounded-lg"
+                  className={`w-full p-2 rounded-lg ${
+                    isDarkMode 
+                      ? "bg-gray-800 text-gray-300 border-gray-700" 
+                      : "bg-white text-gray-700 border-gray-300"
+                  }`}
                 >
                   <option value="">All Years</option>
                   {releaseYears.map((year) => (
@@ -174,13 +325,21 @@ const FilmList = () => {
             <div className="mt-4 flex justify-between">
               <button
                 onClick={handleResetFilters}
-                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition"
+                className={`px-4 py-2 rounded-md transition ${
+                  isDarkMode 
+                    ? "bg-gray-600 text-gray-300 hover:bg-gray-500" 
+                    : "bg-gray-400 text-gray-700 hover:bg-gray-500"
+                }`}
               >
                 Reset Filters
               </button>
               <button
                 onClick={handleFilterChange}
-                className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition"
+                className={`px-4 py-2 rounded-md transition ${
+                  isDarkMode 
+                    ? "bg-yellow-500 text-gray-900 hover:bg-yellow-600" 
+                    : "bg-yellow-600 text-white hover:bg-yellow-700"
+                }`}
               >
                 Apply Filters
               </button>
@@ -189,33 +348,28 @@ const FilmList = () => {
         )}
 
         {isLoading ? (
-          <div className="flex justify-center items-center mb-12">
-            <div className="animate-spin border-t-4 border-yellow-500 w-16 h-16 rounded-full"></div>
+          <div className="flex justify-center items-center my-24">
+            <div className="relative w-20 h-20">
+              <div className={`absolute inset-0 border-4 ${
+                isDarkMode 
+                  ? "border-gray-800 border-t-yellow-500" 
+                  : "border-gray-200 border-t-yellow-600"
+                } rounded-full animate-spin`}
+              >
+              </div>
+              <div className={`absolute inset-3 border-4 ${
+                isDarkMode 
+                  ? "border-gray-800 border-b-yellow-500" 
+                  : "border-gray-200 border-b-yellow-600"
+                } rounded-full animate-spin animate-delay-150`}
+              >
+              </div>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {filteredFilms.map((film) => (
-              <Link key={film.id} href={`/film/${film.slug}`}>
-                <div className="cursor-pointer bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-transform transform hover:scale-105">
-                  <img
-                    src={film.posterUrl}
-                    alt={film.title}
-                    className="w-full h-56 object-cover rounded-t-lg"
-                  />
-                  <div className="p-4">
-                    <h3 className="text-xl font-semibold truncate">{film.title}</h3>
-                    <p className="text-gray-500 dark:text-gray-300 text-sm truncate">
-                      {film.description.length > 120
-                        ? `${film.description.substring(0, 120)}...`
-                        : film.description}
-                    </p>
-                    <div className="mt-2 text-sm text-yellow-500 font-medium flex justify-between">
-                      <span>{film.releaseYear}</span>
-                      <span>{film.duration} menit</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+              <FilmCard key={film.id} film={film} />
             ))}
           </div>
         )}

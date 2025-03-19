@@ -31,15 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Comment ID is required' });
   }
 
-  const userId = getUserIdFromToken(req);
-
-  if (!userId) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'You need to be logged in to perform this action.',
-    });
-  }
-
   try {
     if (req.method === 'GET') {
       const comment = await prisma.comment.findUnique({
@@ -55,6 +46,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       return res.status(200).json(comment);
+    }
+
+    const userId = getUserIdFromToken(req);
+
+    if (!userId) {
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'You need to be logged in to perform this action.',
+      });
     }
 
     if (req.method === 'PUT') {

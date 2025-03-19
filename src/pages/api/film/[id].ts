@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
+import { parse } from 'path';
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -64,8 +65,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           description,
           posterUrl,
           trailerUrl,
-          duration,
-          releaseYear,
+          duration: parseInt(duration, 10),
+          releaseYear: parseInt(releaseYear, 10),
           category,
           episode: category === 'MOVIE' ? null : parseInt(episode, 10),
         },

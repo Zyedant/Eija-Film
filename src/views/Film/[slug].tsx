@@ -11,6 +11,8 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaExpand,
+  FaSortAmountDown,
+  FaSortAmountUp,
 } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,8 +64,10 @@ interface FilmData {
   comments: Comment[];
   director?: string;
   userCommented: boolean;
-  userRating?: number; 
-  userCommentId?: string; 
+  userRating?: number;
+  userCommentId?: string;
+  category: string;
+  episode?: number;
 }
 
 const FilmDetail = () => {
@@ -72,6 +76,7 @@ const FilmDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [comment, setComment] = useState<string>("");
   const [commentList, setCommentList] = useState<Comment[]>([]);
+  const [filteredCommentList, setFilteredCommentList] = useState<Comment[]>([]);
   const [rating, setRating] = useState<number | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
@@ -79,13 +84,51 @@ const FilmDetail = () => {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [showAllComments, setShowAllComments] = useState(false);
   const [expandedComment, setExpandedComment] = useState<string | null>(null);
-  const [showTrailer, setShowTrailer] = useState(false);
+  const [showTrailerModal, setShowTrailerModal] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+  const [sortOption, setSortOption] = useState<"newest" | "oldest" | "best" | "worst">("newest");
 
   const { query, isReady, push } = useRouter();
   const filmSlug = query.slug as string | undefined;
 
   const commentsToShow = 3;
+
+  const separateAdminComments = (comments: Comment[]) => {
+    const adminComments = comments.filter((comment) => comment.user.role === "ADMIN");
+    const userComments = comments.filter((comment) => comment.user.role !== "ADMIN");
+    return { adminComments, userComments };
+  };
+
+  const sortUserComments = (comments: Comment[], option: "newest" | "oldest" | "best" | "worst") => {
+    switch (option) {
+      case "newest":
+        return [...comments].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      case "oldest":
+        return [...comments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      case "best":
+        return [...comments].sort((a, b) => {
+          const ratingA = a.rating?.[0]?.score || 0;
+          const ratingB = b.rating?.[0]?.score || 0;
+          return ratingB - ratingA; 
+        });
+      case "worst":
+        return [...comments].sort((a, b) => {
+          const ratingA = a.rating?.[0]?.score || 0;
+          const ratingB = b.rating?.[0]?.score || 0;
+          return ratingA - ratingB; 
+        });
+      default:
+        return comments;
+    }
+  };
+
+  useEffect(() => {
+    if (commentList.length > 0) {
+      const { adminComments, userComments } = separateAdminComments(commentList);
+      const sortedUserComments = sortUserComments(userComments, sortOption);
+      setFilteredCommentList([...adminComments, ...sortedUserComments]);
+    }
+  }, [commentList, sortOption]);
 
   useEffect(() => {
     const handleThemeChange = () => {
@@ -116,72 +159,72 @@ const FilmDetail = () => {
     const fetchCurrentUser = async () => {
       try {
         const token = Cookies.get('token');
-
+  
         if (!token) {
-          throw new Error("Token tidak ditemukan");
+          setCurrentUserId(null);
+          setCurrentUserRole(null);
+          return;
         }
-
+  
         const decodedToken: any = jwt.decode(token);
-
+  
         if (!decodedToken || !decodedToken.id) {
-          throw new Error("Token tidak valid");
+          setCurrentUserId(null);
+          setCurrentUserRole(null);
+          return;
         }
-
+  
         setCurrentUserId(decodedToken.id);
         setCurrentUserRole(decodedToken.role);
       } catch (err) {
         console.error("Failed to fetch current user:", err);
+        setCurrentUserId(null);
+        setCurrentUserRole(null);
       }
     };
-
+  
     fetchCurrentUser();
   }, []);
 
   useEffect(() => {
     if (!isReady || !filmSlug) return;
-
+  
     const fetchFilmData = async () => {
       setLoading(true);
       setError(null);
-
+  
       try {
         const filmRes = await fetch(`/api/films/${encodeURIComponent(filmSlug)}`);
         if (!filmRes.ok) {
           throw new Error("Film tidak ditemukan");
         }
-
+  
         const filmData = await filmRes.json();
-        console.log("Data film:", filmData);
-
+  
         let totalRating = 0;
         let ratingCount = 0;
-
+  
+        let userCommented = false;
+        let userRating: number | undefined = undefined;
+        let userCommentId: string | undefined = undefined;
+  
         if (filmData.comments && filmData.comments.length > 0) {
           filmData.comments.forEach((comment) => {
             if (comment.user.role === "USER" && comment.rating && comment.rating.length > 0) {
               totalRating += comment.rating[0].score;
               ratingCount++;
             }
+  
+            if (comment.user.id === currentUserId) {
+              userCommented = true;
+              userRating = comment.rating?.[0]?.score || undefined;
+              userCommentId = comment.id;
+            }
           });
         }
-
+  
         const avgRating = ratingCount > 0 ? totalRating / ratingCount : 0;
-
-        let userCommented = false;
-        let userRating: number | undefined = undefined; 
-        let userCommentId: string | undefined = undefined; 
-
-        if (currentUserId) {
-          const userComment = filmData.comments.find(
-            (comment) => comment.user.id === currentUserId
-          );
-          if (userComment) {
-            userCommented = true;
-            userRating = userComment.rating?.[0]?.score || undefined;
-            userCommentId = userComment.id;
-          }
-        }
-
+  
         const transformedFilmData: FilmData = {
           id: filmData.id,
           title: filmData.title,
@@ -198,17 +241,19 @@ const FilmDetail = () => {
             realName: cr.casting.realName,
             photoUrl: cr.casting.photoUrl,
             role: cr.role,
-          })), 
+          })),
           trailerUrl: filmData.trailerUrl || "",
           comments: filmData.comments || [],
           director: filmData.director,
-          userCommented,
-          userRating,
-          userCommentId,
+          userCommented: userCommented,
+          userRating: userRating,
+          userCommentId: userCommentId,
+          category: filmData.category,
+          episode: filmData.episode,
         };
-
+  
         setFilm(transformedFilmData);
-
+  
         if (filmData.id) {
           fetchComments(filmData.id);
         }
@@ -219,32 +264,19 @@ const FilmDetail = () => {
         setLoading(false);
       }
     };
-
+  
     fetchFilmData();
   }, [filmSlug, isReady, currentUserId]);
-
+  
   const fetchComments = async (filmId: string) => {
     try {
       const commentsRes = await fetch(`/api/comment?filmId=${encodeURIComponent(filmId)}`);
       if (!commentsRes.ok) {
         throw new Error("Failed to fetch comments");
       }
-
+  
       const commentsData = await commentsRes.json();
-
       setCommentList(commentsData);
-
-      if (currentUserId) {
-        const userComment = commentsData.find((comment) => comment.userId === currentUserId);
-        if (userComment) {
-          setFilm((prevFilm) => ({
-            ...prevFilm!,
-            userCommented: true,
-            userRating: userComment.rating?.[0]?.score || undefined,
-            userCommentId: userComment.id,
-          }));
-        }
-      }
     } catch (err) {
       console.error("Error fetching comments:", err);
       setError("Gagal memuat komentar");
@@ -252,8 +284,16 @@ const FilmDetail = () => {
   };
 
   const handleAddComment = async () => {
-    if (!film || !currentUserId || film.userCommented) return;
-
+    if (!film || !currentUserId) {
+      toast.error("Anda perlu login untuk menambahkan komentar.");
+      return;
+    }
+  
+    if (film.userCommented) {
+      toast.error("Anda sudah memberikan komentar sebelumnya.");
+      return;
+    }
+  
     if (comment.trim()) {
       try {
         const commentRes = await fetch(`/api/comment`, {
@@ -267,13 +307,13 @@ const FilmDetail = () => {
             userId: currentUserId,
           }),
         });
-
+  
         const responseComment = await commentRes.json();
-
+  
         if (!commentRes.ok) {
           throw new Error("Failed to add comment");
         }
-
+  
         if (rating !== null) {
           const ratingRes = await fetch(`/api/rating`, {
             method: "POST",
@@ -287,21 +327,21 @@ const FilmDetail = () => {
               commentId: responseComment.id,
             }),
           });
-
+  
           if (!ratingRes.ok) {
             throw new Error("Failed to add rating");
           }
         }
-
+  
         setFilm((prevFilm) => ({
           ...prevFilm!,
           userCommented: true,
           userRating: rating || undefined,
           userCommentId: responseComment.id,
         }));
-
+  
         fetchComments(film.id);
-
+  
         toast.success("Komentar berhasil ditambahkan!");
         setComment("");
         setRating(null);
@@ -429,6 +469,67 @@ const FilmDetail = () => {
     }
   };
 
+  const renderStars = (rating: number) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    return (
+      <div className="flex">
+        {[...Array(fullStars)].map((_, i) => (
+          <FaStar key={`full-${i}`} className="w-5 h-5 text-yellow-500" />
+        ))}
+        {hasHalfStar && (
+          <div className="relative w-5 h-5">
+            <FaStar className="w-5 h-5 text-gray-400" />
+            <div className="absolute top-0 left-0 w-1/2 h-full overflow-hidden">
+              <FaStar className="w-5 h-5 text-yellow-500" />
+            </div>
+          </div>
+        )}
+        {[...Array(emptyStars)].map((_, i) => (
+          <FaStar key={`empty-${i}`} className="w-5 h-5 text-gray-400" />
+        ))}
+      </div>
+    );
+  };
+
+  const TrailerModal = ({ trailerUrl, onClose }: { trailerUrl: string; onClose: () => void }) => {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+        <div className="relative w-full max-w-4xl bg-gray-900 rounded-lg overflow-hidden">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-50 p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
+          <iframe
+            src={`${trailerUrl}`}
+            title="Film Trailer"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full aspect-video"
+          />
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className={`flex justify-center items-center min-h-screen ${isDarkMode ? "bg-gradient-to-b from-gray-800 to-gray-900" : "bg-gradient-to-b from-gray-100 to-white"}`}>
@@ -478,7 +579,7 @@ const FilmDetail = () => {
                 <Button
                   variant="default"
                   className={`w-full flex items-center gap-2 ${isDarkMode ? "bg-yellow-500 hover:bg-yellow-600 text-black" : "bg-yellow-600 hover:bg-yellow-700 text-white"}`}
-                  onClick={() => setShowTrailer(true)}
+                  onClick={() => setShowTrailerModal(true)}
                 >
                   <FaPlayCircle className="w-5 h-5" />
                   Tonton Trailer
@@ -493,11 +594,23 @@ const FilmDetail = () => {
               <p className={`text-xl ${isDarkMode ? "text-gray-300" : "text-gray-700"} mb-6`}>Disutradarai oleh {film.director}</p>
             )}
 
+            <div className="mb-4">
+              <Badge className={`${isDarkMode ? "bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 border border-yellow-500/30" : "bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/20 border border-yellow-500/20"}`}>
+                {film.category}
+              </Badge>
+            </div>
+
             <div className="flex items-center space-x-6 mb-6">
               {film.releaseYear > 0 && (
                 <div className="flex items-center gap-2">
                   <FaCalendarAlt className="w-5 h-5 text-yellow-500" />
                   <span className={`${isDarkMode ? "text-gray-200" : "text-gray-700"}`}>{film.releaseYear}</span>
+                </div>
+              )}
+
+              {(film.category === "SERIES" || film.category === "ANIME") && film.episode && (
+                <div className="flex items-center gap-2">
+                  <span className={`${isDarkMode ? "text-gray-200" : "text-gray-700"}`}>{film.episode} Episode</span>
                 </div>
               )}
 
@@ -507,23 +620,14 @@ const FilmDetail = () => {
                   <span className={`${isDarkMode ? "text-gray-200" : "text-gray-700"}`}>{film.duration} menit</span>
                 </div>
               )}
-
-              {film.avgRating > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <FaStar
-                        key={i}
-                        className={`w-5 h-5 ${i < Math.round(film.avgRating)
-                          ? "text-yellow-500"
-                          : isDarkMode ? "text-gray-600" : "text-gray-400"}`}
-                      />
-                    ))}
-                  </div>
-                  <span className={`${isDarkMode ? "text-gray-200" : "text-gray-700"}`}>{film.avgRating.toFixed(1)}</span>
-                </div>
-              )}
             </div>
+
+            {film.avgRating > 0 && (
+              <div className="flex items-center gap-2 mb-6">
+                {renderStars(film.avgRating)}
+                <span className={`${isDarkMode ? "text-gray-200" : "text-gray-700"}`}>{film.avgRating.toFixed(1)}</span>
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2 mb-8">
               {film.genres && film.genres.length > 0 ? (
@@ -569,239 +673,236 @@ const FilmDetail = () => {
                 )}
               </div>
             </div>
+          </div>
+        </div>
 
-            {showTrailer && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
-                <div className="relative w-full max-w-4xl bg-gray-900 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => setShowTrailer(false)}
-                    className="absolute top-4 right-4 z-50 p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
+        <div className="mt-10">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <h3 className={`text-2xl font-semibold ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}>Komentar</h3>
+              <Badge className={`${isDarkMode ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30" : "bg-yellow-500/10 text-yellow-700 border border-yellow-500/20"}`}>
+                {commentList.length}
+              </Badge>
+            </div>
 
-                  <iframe
-                    src={`https://www.youtube.com/embed/${film.trailerUrl}`}
-                    title={`${film.title} Trailer`}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="w-full aspect-video"
-                  />
-                </div>
+            <div className="relative">
+              <select
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value as "newest" | "oldest" | "best" | "worst")}
+                className={`appearance-none px-4 py-2 rounded-lg border ${
+                  isDarkMode
+                    ? "bg-gray-800/60 border-gray-700 text-gray-200"
+                    : "bg-white/90 border-gray-200 text-gray-900"
+                } focus:outline-none focus:ring-2 ${
+                  isDarkMode ? "focus:ring-yellow-500" : "focus:ring-yellow-600"
+                }`}
+              >
+                <option value="newest">Paling Baru</option>
+                <option value="oldest">Paling Lama</option>
+                <option value="best">Rating Terbaik</option>
+                <option value="worst">Rating Terburuk</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                <FaSortAmountDown className={`w-4 h-4 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`} />
               </div>
-            )}
+            </div>
+          </div>
 
-            <div className="mt-10">
-              <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-2">
-                  <h3 className={`text-2xl font-semibold ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}>Komentar</h3>
-                  <Badge className={`${isDarkMode ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30" : "bg-yellow-500/10 text-yellow-700 border border-yellow-500/20"}`}>
-                    {commentList.length}
-                  </Badge>
-                </div>
+          <div className={`${isDarkMode ? "bg-gray-800/60 border border-gray-700" : "bg-white/90 border border-gray-200"} rounded-xl overflow-hidden`}>
+            <div className={`${isDarkMode ? "bg-gray-700/80" : "bg-gray-200/90"} p-4 flex justify-between items-center`}>
+              <div className="flex items-center gap-2">
+                <FaComments className={`${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`} />
+                <span className={`font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}>Ulasan Penonton</span>
               </div>
-
-              <div className={`${isDarkMode ? "bg-gray-800/60 border border-gray-700" : "bg-white/90 border border-gray-200"} rounded-xl overflow-hidden`}>
-                <div className={`${isDarkMode ? "bg-gray-700/80" : "bg-gray-200/90"} p-4 flex justify-between items-center`}>
-                  <div className="flex items-center gap-2">
-                    <FaComments className={`${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`} />
-                    <span className={`font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}>Ulasan Penonton</span>
+              <Button
+                variant="ghost"
+                className={`${isDarkMode ? "text-yellow-400 hover:text-yellow-500 hover:bg-gray-700" : "text-yellow-600 hover:text-yellow-700 hover:bg-gray-200"}`}
+                onClick={() => setShowAllComments(!showAllComments)}
+              >
+                {showAllComments ? (
+                  <div className="flex items-center gap-1">
+                    <FaChevronUp className="w-4 h-4" />
+                    <span>Sembunyikan</span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    className={`${isDarkMode ? "text-yellow-400 hover:text-yellow-500 hover:bg-gray-700" : "text-yellow-600 hover:text-yellow-700 hover:bg-gray-200"}`}
-                    onClick={() => setShowAllComments(!showAllComments)}
-                  >
-                    {showAllComments ? (
-                      <div className="flex items-center gap-1">
-                        <FaChevronUp className="w-4 h-4" />
-                        <span>Sembunyikan</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        <FaChevronDown className="w-4 h-4" />
-                        <span>Lihat Semua</span>
-                      </div>
-                    )}
-                  </Button>
-                </div>
-
-                <div className="max-h-[600px] overflow-y-auto p-4">
-                  {commentList && commentList.length > 0 ? (
-                    (showAllComments ? commentList : commentList.slice(0, commentsToShow)).map((commentItem) => (
-                      <div
-                        key={commentItem.id}
-                        className={`mb-4 last:mb-0 ${isDarkMode
-                          ? `bg-gray-800/80 ${commentItem.user.id === currentUserId ? "border-yellow-500/40" : "border-gray-700"} hover:bg-gray-800`
-                          : `bg-gray-100/80 ${commentItem.user.id === currentUserId ? "border-yellow-600/40" : "border-gray-300"} hover:bg-gray-200`}
-                        p-4 rounded-lg shadow-md border transition-all ${expandedComment === commentItem.id ? (isDarkMode ? "border-yellow-400" : "border-yellow-600") : ""}`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span className={`font-semibold ${
-                            commentItem.user.id === currentUserId
-                              ? (isDarkMode ? "text-yellow-400" : "text-yellow-600")
-                              : (isDarkMode ? "text-white" : "text-gray-900")
-                          }`}>
-                            {commentItem.user.name}
-                            {commentItem.user.id === currentUserId && " (Anda)"}
-                          </span>
-                          {commentItem.user.role === "USER" && (
-                            <div className="flex items-center gap-1">
-                              {[...Array(5)].map((_, i) => (
-                                <FaStar
-                                  key={i}
-                                  className={`w-4 h-4 ${i < Math.round(commentItem.rating?.[0]?.score || 0)
-                                    ? "text-yellow-500"
-                                    : isDarkMode ? "text-gray-600" : "text-gray-400"}`}
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mt-2 relative">
-                          <p className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} leading-relaxed ${
-                            expandedComment === commentItem.id ? "" : "line-clamp-2"
-                          }`}>
-                            {commentItem.content}
-                          </p>
-
-                          {commentItem.content.length > 100 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleExpandComment(commentItem.id)}
-                              className={`mt-1 ${isDarkMode ? "text-yellow-500 hover:text-yellow-400" : "text-yellow-600 hover:text-yellow-700"} hover:bg-transparent p-0 h-auto flex items-center gap-1`}
-                            >
-                              <FaExpand className="w-3 h-3" />
-                              <span>{expandedComment === commentItem.id ? "Tutup" : "Baca selengkapnya"}</span>
-                            </Button>
-                          )}
-                        </div>
-
-                        <div className="flex justify-between items-center mt-2 text-sm">
-                          <span className={`${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                            {new Date(commentItem.createdAt).toLocaleDateString()}
-                          </span>
-
-                          {commentItem.user.id === currentUserId && (
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => {
-                                  setComment(commentItem.content);
-                                  setRating(commentItem.rating?.[0]?.score || null);
-                                  setEditingCommentId(commentItem.id);
-                                  setIsEditing(true);
-                                  document.getElementById("comment-form")?.scrollIntoView({ behavior: "smooth" });
-                                }}
-                                variant="outline"
-                                size="sm"
-                                className={`flex items-center gap-1 ${isDarkMode ? "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10" : "border-yellow-600/30 text-yellow-600 hover:bg-yellow-600/10"} py-1 h-7`}
-                              >
-                                <FaEdit className="w-3 h-3" /> Edit
-                              </Button>
-                              <Button
-                                onClick={() => handleDeleteComment(commentItem.id)}
-                                variant="destructive"
-                                size="sm"
-                                className="flex items-center gap-1 py-1 h-7"
-                              >
-                                <FaTrash className="w-3 h-3" /> Hapus
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-10">
-                      <p className={`${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>Belum ada komentar untuk film ini</p>
-                      {!film.userCommented && (
-                        <p className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} mt-2`}>Jadilah yang pertama memberikan komentar!</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {!showAllComments && commentList.length > commentsToShow && (
-                  <div className={`p-4 ${isDarkMode ? "bg-gray-800/90 border-t border-gray-700" : "bg-gray-100/90 border-t border-gray-300"} flex justify-center`}>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowAllComments(true)}
-                      className={`w-full flex items-center justify-center gap-2 ${isDarkMode ? "border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/10" : "border-yellow-600/20 text-yellow-600 hover:bg-yellow-600/10"}`}
-                    >
-                      <FaChevronDown />
-                      Lihat {commentList.length - commentsToShow} komentar lainnya
-                    </Button>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <FaChevronDown className="w-4 h-4" />
+                    <span>Lihat Semua</span>
                   </div>
                 )}
-              </div>
+              </Button>
+            </div>
 
-              {(!film.userCommented || isEditing) && (
-                <div id="comment-form" className={`mt-6 ${isDarkMode ? "bg-gray-800/80 p-6 rounded-lg shadow-lg border border-gray-700" : "bg-white/90 p-6 rounded-lg shadow-lg border border-gray-200"}`}>
-                  <h3 className={`text-xl font-semibold mb-4 ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}>
-                    {isEditing ? "Edit Komentar dan Rating" : "Tambahkan Komentar dan Rating"}
-                  </h3>
-
-                  <div className="mb-4 flex items-center gap-4">
-                    <span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>Rating:</span>
-                    <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <FaStar
-                          key={star}
-                          onClick={() => handleRatingChange(star)}
-                          className={`w-6 h-6 cursor-pointer transition-colors ${
-                            star <= (rating || 0) ? "text-yellow-500" : isDarkMode ? "text-gray-600" : "text-gray-400"
-                          } hover:text-yellow-400`}
-                        />
-                      ))}
+            <div className="max-h-[600px] overflow-y-auto p-4">
+              {filteredCommentList && filteredCommentList.length > 0 ? (
+                (showAllComments ? filteredCommentList : filteredCommentList.slice(0, commentsToShow)).map((commentItem) => (
+                  <div
+                    key={commentItem.id}
+                    className={`mb-4 last:mb-0 ${isDarkMode
+                      ? `bg-gray-800/80 ${commentItem.user.id === currentUserId ? "border-yellow-500/40" : "border-gray-700"} hover:bg-gray-800`
+                      : `bg-gray-100/80 ${commentItem.user.id === currentUserId ? "border-yellow-600/40" : "border-gray-300"} hover:bg-gray-200`}
+                    p-4 rounded-lg shadow-md border transition-all ${expandedComment === commentItem.id ? (isDarkMode ? "border-yellow-400" : "border-yellow-600") : ""}`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className={`font-semibold ${
+                        commentItem.user.id === currentUserId
+                          ? (isDarkMode ? "text-yellow-400" : "text-yellow-600")
+                          : (isDarkMode ? "text-white" : "text-gray-900")
+                      }`}>
+                        {commentItem.user.name}
+                        {commentItem.user.id === currentUserId && " (Anda)"}
+                        {commentItem.user.role === "ADMIN" && " (ADMIN)"}
+                      </span>
+                      {commentItem.user.role === "USER" && (
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar
+                              key={i}
+                              className={`w-4 h-4 ${i < Math.round(commentItem.rating?.[0]?.score || 0)
+                                ? "text-yellow-500"
+                                : isDarkMode ? "text-gray-600" : "text-gray-400"}`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {rating && <span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>({rating}/5)</span>}
+
+                    <div className="mt-2 relative">
+                      <p className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} leading-relaxed ${
+                        expandedComment === commentItem.id ? "" : "line-clamp-2"
+                      }`}>
+                        {commentItem.content}
+                      </p>
+
+                      {commentItem.content.length > 100 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleExpandComment(commentItem.id)}
+                          className={`mt-1 ${isDarkMode ? "text-yellow-500 hover:text-yellow-400" : "text-yellow-600 hover:text-yellow-700"} hover:bg-transparent p-0 h-auto flex items-center gap-1`}
+                        >
+                          <FaExpand className="w-3 h-3" />
+                          <span>{expandedComment === commentItem.id ? "Tutup" : "Baca selengkapnya"}</span>
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="flex justify-between items-center mt-2 text-sm">
+                      <span className={`${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                        {new Date(commentItem.createdAt).toLocaleDateString()}
+                      </span>
+
+                      {commentItem.user.id === currentUserId && (
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              setComment(commentItem.content);
+                              setRating(commentItem.rating?.[0]?.score || null);
+                              setEditingCommentId(commentItem.id);
+                              setIsEditing(true);
+                              document.getElementById("comment-form")?.scrollIntoView({ behavior: "smooth" });
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className={`flex items-center gap-1 ${isDarkMode ? "border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10" : "border-yellow-600/30 text-yellow-600 hover:bg-yellow-600/10"} py-1 h-7`}
+                          >
+                            <FaEdit className="w-3 h-3" /> Edit
+                          </Button>
+                          <Button
+                            onClick={() => handleDeleteComment(commentItem.id)}
+                            variant="destructive"
+                            size="sm"
+                            className="flex items-center gap-1 py-1 h-7"
+                          >
+                            <FaTrash className="w-3 h-3" /> Hapus
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-
-                  <textarea
-                    className={`w-full p-4 border ${isDarkMode ? "border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500" : "border-gray-300 bg-white text-black placeholder-gray-400 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600"} rounded-md`}
-                    placeholder="Tuliskan pendapat Anda tentang film ini..."
-                    rows={4}
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                  />
-
-                  <div className="mt-6 flex gap-3">
-                    <Button
-                      className="px-6 bg-yellow-500 hover:bg-yellow-600 text-black"
-                      onClick={isEditing ? handleUpdateComment : handleAddComment}
-                    >
-                      {isEditing ? "Perbarui" : "Kirim"} Komentar
-                    </Button>
-
-                    {isEditing && (
-                      <Button
-                        variant="outline"
-                        className={`px-6 ${isDarkMode ? "border-gray-600 text-gray-300 hover:bg-gray-700" : "border-gray-300 text-gray-600 hover:bg-gray-200"}`}
-                        onClick={cancelEdit}
-                      >
-                        Batal
-                      </Button>
-                    )}
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10">
+                  <p className={`${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>Belum ada komentar untuk film ini</p>
+                  {!film.userCommented && (
+                    <p className={`${isDarkMode ? "text-gray-300" : "text-gray-700"} mt-2`}>Jadilah yang pertama memberikan komentar!</p>
+                  )}
                 </div>
               )}
             </div>
+
+            {!showAllComments && filteredCommentList.length > commentsToShow && (
+              <div className={`p-4 ${isDarkMode ? "bg-gray-800/90 border-t border-gray-700" : "bg-gray-100/90 border-t border-gray-300"} flex justify-center`}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAllComments(true)}
+                  className={`w-full flex items-center justify-center gap-2 ${isDarkMode ? "border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/10" : "border-yellow-600/20 text-yellow-600 hover:bg-yellow-600/10"}`}
+                >
+                  <FaChevronDown />
+                  Lihat {filteredCommentList.length - commentsToShow} komentar lainnya
+                </Button>
+              </div>
+            )}
           </div>
+
+          {currentUserId ? (
+            (!film.userCommented || isEditing) && (
+              <div id="comment-form" className={`mt-6 ${isDarkMode ? "bg-gray-800/80 p-6 rounded-lg shadow-lg border border-gray-700" : "bg-white/90 p-6 rounded-lg shadow-lg border border-gray-200"}`}>
+                <h3 className={`text-xl font-semibold mb-4 ${isDarkMode ? "text-yellow-400" : "text-yellow-600"}`}>
+                  {isEditing ? "Edit Komentar dan Rating" : "Tambahkan Komentar dan Rating"}
+                </h3>
+
+                <div className="mb-4 flex items-center gap-4">
+                  <span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>Rating:</span>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <FaStar
+                        key={star}
+                        onClick={() => handleRatingChange(star)}
+                        className={`w-6 h-6 cursor-pointer transition-colors ${
+                          star <= (rating || 0) ? "text-yellow-500" : isDarkMode ? "text-gray-600" : "text-gray-400"
+                        } hover:text-yellow-400`}
+                      />
+                    ))}
+                  </div>
+                  {rating && <span className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>({rating}/5)</span>}
+                </div>
+
+                <textarea
+                  className={`w-full p-4 border ${isDarkMode ? "border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500" : "border-gray-300 bg-white text-black placeholder-gray-400 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600"} rounded-md`}
+                  placeholder="Tuliskan pendapat Anda tentang film ini..."
+                  rows={4}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                />
+
+                <div className="mt-6 flex gap-3">
+                  <Button
+                    className="px-6 bg-yellow-500 hover:bg-yellow-600 text-black"
+                    onClick={isEditing ? handleUpdateComment : handleAddComment}
+                  >
+                    {isEditing ? "Perbarui" : "Kirim"} Komentar
+                  </Button>
+
+                  {isEditing && (
+                    <Button
+                      variant="outline"
+                      className={`px-6 ${isDarkMode ? "border-gray-600 text-gray-300 hover:bg-gray-700" : "border-gray-300 text-gray-600 hover:bg-gray-200"}`}
+                      onClick={cancelEdit}
+                    >
+                      Batal
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )
+          ) : (
+            <div className={`mt-6 ${isDarkMode ? "bg-gray-800/80 p-6 rounded-lg shadow-lg border border-gray-700" : "bg-white/90 p-6 rounded-lg shadow-lg border border-gray-200"}`}>
+              <p className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                Silakan <a href="/auth/login" className={`${isDarkMode ? "text-yellow-400 hover:text-yellow-500" : "text-yellow-600 hover:text-yellow-700"}`}>login</a> untuk menambahkan komentar dan rating.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

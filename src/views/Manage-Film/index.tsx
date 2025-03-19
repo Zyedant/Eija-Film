@@ -71,9 +71,13 @@ const FilmDetail = ({ film, onBack, users, onSave }: { film: Film; onBack: () =>
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, field: keyof Film) => {
+    const value = field === 'releaseYear' || field === 'duration' || field === 'episode' 
+      ? parseInt(e.target.value, 10) 
+      : e.target.value;
+  
     setEditedFilm({
       ...editedFilm,
-      [field]: e.target.value,
+      [field]: value,
     });
   };
 
@@ -455,7 +459,7 @@ const FilmForm = ({ onSaveFilm, onCancel }: { onSaveFilm: (film: Film) => void; 
       const userId = decoded.id;
 
       const newFilm: Film = {
-        id: "", // ID akan di-generate oleh backend
+        id: "", 
         title,
         slug,
         description,

@@ -46,7 +46,6 @@ const Navbar = () => {
     const token = Cookies.get("token");
     const isLoggedIn = Cookies.get("isLoggedIn");
   
-    // Pastikan nilai isLoggedIn adalah boolean
     setIsLoggedIn(!!(token && isLoggedIn === "true"));
   
     if (token && isLoggedIn === "true") {
@@ -318,87 +317,90 @@ const Navbar = () => {
 
             {isLoggedIn ? (
               <div className="relative" ref={profileRef}>
-                <button
-                  onClick={toggleProfileDropdown}
-                  className={`flex items-center space-x-2 ${
-                    isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
-                  } p-2 rounded-full transition duration-200`}
-                >
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-500 shadow-md">
-                    {userImage ? (
-                      <img
-                        src={userImage}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className={`w-full h-full flex items-center justify-center ${
-                        isDarkMode ? "bg-gray-700" : "bg-gray-200"
-                      }`}>
-                        <FaUserCircle size={32} className={`${
-                          isDarkMode ? "text-gray-400" : "text-gray-600"
-                        }`} />
-                      </div>
-                    )}
-                  </div>
-                  <FaChevronDown className={`${
-                    isDarkMode ? "text-gray-400" : "text-gray-600"
-                  } ${isProfileOpen ? "transform rotate-180" : ""} transition-transform duration-200`} />
-                </button>
-                
-                {isProfileOpen && (
-                  <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${
-                    isDarkMode ? "bg-gray-800" : "bg-white"
-                  } ring-1 ring-black ring-opacity-5 py-1 z-20`}>
-                    <div className={`px-4 py-3 border-b ${
-                      isDarkMode ? "border-gray-700" : "border-gray-200"
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleProfileDropdown();
+                }}
+                className={`flex items-center space-x-2 ${
+                  isDarkMode ? "hover:bg-gray-800" : "hover:bg-gray-100"
+                } p-2 rounded-full transition duration-200`}
+              >
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-yellow-500 shadow-md">
+                  {userImage ? (
+                    <img
+                      src={userImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className={`w-full h-full flex items-center justify-center ${
+                      isDarkMode ? "bg-gray-700" : "bg-gray-200"
                     }`}>
-                      <p className={`font-medium ${
-                        isDarkMode ? "text-gray-200" : "text-gray-800"
-                      }`}>{userName || "User"}</p>
+                      <FaUserCircle size={32} className={`${
+                        isDarkMode ? "text-gray-400" : "text-gray-600"
+                      }`} />
                     </div>
+                  )}
+                </div>
+                <FaChevronDown className={`${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                } ${isProfileOpen ? "transform rotate-180" : ""} transition-transform duration-200`} />
+              </button>
+              
+              {isProfileOpen && (
+                <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${
+                  isDarkMode ? "bg-gray-800" : "bg-white"
+                } ring-1 ring-black ring-opacity-5 py-1 z-50`}>
+                  <div className={`px-4 py-3 border-b ${
+                    isDarkMode ? "border-gray-700" : "border-gray-200"
+                  }`}>
+                    <p className={`font-medium ${
+                      isDarkMode ? "text-gray-200" : "text-gray-800"
+                    }`}>{userName || "User"}</p>
+                  </div>
+                  <Link
+                    href="/profile"
+                    className={`block px-4 py-2 text-sm ${
+                      isDarkMode ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+                    } transition duration-150`}
+                    onClick={() => setIsProfileOpen(false)} 
+                  >
+                    Profile
+                  </Link>
+                  {isAdmin && (
                     <Link
-                      href="/profile"
+                      href="/admin"
                       className={`block px-4 py-2 text-sm ${
                         isDarkMode ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
                       } transition duration-150`}
-                      onClick={() => setIsProfileOpen(false)}
+                      onClick={() => setIsProfileOpen(false)} 
                     >
-                      Profile
+                      Admin
                     </Link>
-                    {isAdmin && (
-                      <Link
-                        href="/admin"
-                        className={`block px-4 py-2 text-sm ${
-                          isDarkMode ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
-                        } transition duration-150`}
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        Admin
-                      </Link>
-                    )}
-                    {isAuthor && (
-                      <Link
-                        href="/author"
-                        className={`block px-4 py-2 text-sm ${
-                          isDarkMode ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
-                        } transition duration-150`}
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        Author
-                      </Link>
-                    )}
-                    <button
-                      onClick={openModal}
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        isDarkMode ? "text-red-400 hover:bg-gray-700" : "text-red-600 hover:bg-gray-100"
+                  )}
+                  {isAuthor && (
+                    <Link
+                      href="/author"
+                      className={`block px-4 py-2 text-sm ${
+                        isDarkMode ? "text-gray-300 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
                       } transition duration-150`}
+                      onClick={() => setIsProfileOpen(false)} 
                     >
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
+                      Author
+                    </Link>
+                  )}
+                  <button
+                    onClick={openModal}
+                    className={`block w-full text-left px-4 py-2 text-sm ${
+                      isDarkMode ? "text-red-400 hover:bg-gray-700" : "text-red-600 hover:bg-gray-100"
+                    } transition duration-150`}
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
             ) : (
               <Link
                 href="/auth/login"

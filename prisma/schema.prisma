@@ -17,6 +17,7 @@ model User {
   id                String           @id @default(cuid())
   name              String
   email             String           @unique
+  telephone         String?
   password          String
   imageUrl          String?
   role              Role
@@ -61,12 +62,12 @@ model Film {
   avgRating         Decimal           @default(0.0)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
-  castingRelations  CastingRelation[]
+  castingRelations  CastingRelation[] 
   genreRelations    GenreRelation[]
   comments          Comment[]
   ratings           Rating[]
   bookmarks         Bookmark[]
-  category          Category          
+  category          Category    
 }
 
 enum Category {

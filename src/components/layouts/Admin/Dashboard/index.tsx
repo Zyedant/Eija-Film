@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
+import Link from "next/link"; 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FaChartLine, FaDollarSign, FaUsers, FaExclamationTriangle } from "react-icons/fa";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
 
 const AdminDashboard = () => {
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [activeSessions, setActiveSessions] = useState(0);
+  const [totalFilms, setTotalFilms] = useState(0);
   const router = useRouter();
-  
+
   useEffect(() => {
     const token = Cookies.get('token');
     if (!token) {
@@ -17,28 +22,48 @@ const AdminDashboard = () => {
     } else {
       const userRole = Cookies.get('role') || null;
       setRole(userRole);
+      fetchDashboardData(); 
       setLoading(false);
     }
   }, [router]);
 
+  const fetchDashboardData = async () => {
+    try {
+      const response = await fetch("/api/admin");
+      if (!response.ok) {
+        throw new Error("Failed to fetch dashboard data");
+      }
+
+      const data = await response.json();
+      setTotalUsers(data.totalUsers);
+      setActiveSessions(data.activeSessions);
+      setTotalFilms(data.totalFilms);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    }
+  };
+
   const dashboardStats = [
     {
       title: "Total Users",
-      value: "1,254",
+      value: totalUsers.toLocaleString(), 
       icon: <FaUsers className="text-2xl" />,
-      gradient: "from-purple-500 to-indigo-600"
+      gradient: "from-yellow-500 to-orange-600",
+      link: "/admin/user" 
     },
     {
       title: "Active Sessions",
-      value: "302",
+      value: activeSessions.toLocaleString(), 
       icon: <FaChartLine className="text-2xl" />,
-      gradient: "from-green-400 to-green-600"
+      gradient: "from-yellow-500 to-orange-600",
+      link: "/admin/user" 
     },
     {
-      title: "Revenue",
-      value: "$5,340",
+      title: "Total Films",
+      value: totalFilms.toLocaleString(), 
       icon: <FaDollarSign className="text-2xl" />,
-      gradient: "from-yellow-500 to-orange-600"
+      gradient: "from-yellow-500 to-orange-600",
+      link: "/admin/film" 
     }
   ];
 
@@ -87,17 +112,20 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {dashboardStats.map((stat, index) => (
-          <Card 
-            key={index}
-            className={`bg-gradient-to-r ${stat.gradient} shadow-xl rounded-xl text-white transform transition-all duration-300 hover:scale-105`}
-          >
-            <CardHeader className="text-lg md:text-xl font-semibold flex items-center pb-2">
-              <span className="mr-2">{stat.icon}</span> {stat.title}
-            </CardHeader>
-            <CardContent className="text-3xl md:text-4xl font-bold pt-0">
-              {stat.value}
-            </CardContent>
-          </Card>
+          <Link href={stat.link} key={index} passHref>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`bg-gradient-to-r ${stat.gradient} shadow-xl rounded-xl text-white transform transition-all duration-300 cursor-pointer`}
+            >
+              <CardHeader className="text-lg md:text-xl font-semibold flex items-center pb-2">
+                <span className="mr-2">{stat.icon}</span> {stat.title}
+              </CardHeader>
+              <CardContent className="text-3xl md:text-4xl font-bold pt-0">
+                {stat.value}
+              </CardContent>
+            </motion.div>
+          </Link>
         ))}
       </div>
     </main>

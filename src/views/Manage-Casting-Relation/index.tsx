@@ -58,6 +58,7 @@ interface CastingRelationFormProps {
   relationToEdit?: CastingRelation;
   films: Film[];
   castings: Casting[];
+  isNewRelation?: boolean;
 }
 
 const CastingRelationForm = ({ onSaveRelation, onCancel, relationToEdit, films, castings }: CastingRelationFormProps) => {
@@ -180,6 +181,7 @@ const ManageCastingRelation = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [relationToEdit, setRelationToEdit] = useState<CastingRelation | null>(null);
+  const [isNewRelation, setIsNewRelation] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -187,6 +189,17 @@ const ManageCastingRelation = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
+  const { search } = router.query;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchBy, setSearchBy] = useState("film");
+
+  useEffect(() => {
+    if (search) {
+      setSearchTerm(search as string);
+    } else {
+      setSearchTerm("");
+    }
+  }, [search]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -272,11 +285,25 @@ const ManageCastingRelation = () => {
     fetchData();
   }, [currentUser, isAdmin]);
 
-  const totalItems = relations.length;
+  const filteredRelations = relations.filter(relation => {
+    const searchLower = searchTerm.toLowerCase();
+    
+    if (searchBy === "film") {
+      return relation.film.title.toLowerCase().includes(searchLower);
+    } else if (searchBy === "casting") {
+      return relation.casting.stageName.toLowerCase().includes(searchLower);
+    } else if (searchBy === "role") {
+      return relation.role.toLowerCase().includes(searchLower);
+    }
+    
+    return true;
+  });
+
+  const totalItems = filteredRelations.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentRelations = relations.slice(startIndex, endIndex);
+  const currentRelations = filteredRelations.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -319,6 +346,12 @@ const ManageCastingRelation = () => {
     }
   };
 
+  const handleAddNewRelation = () => {
+    setRelationToEdit(null);
+    setIsNewRelation(true);
+    setShowForm(true);
+  };
+
   const handleEditRelation = (relation: CastingRelation) => {
     if (!isAdmin) {
       const filmIsOwnedByUser = films.some(
@@ -332,11 +365,12 @@ const ManageCastingRelation = () => {
     }
 
     setRelationToEdit(relation);
+    setIsNewRelation(false);
     setShowForm(true);
   };
 
   const handleSaveRelation = (newRelation: { filmId: string; castingId: string; role: string }) => {
-    if (relationToEdit) {
+    if (relationToEdit && !isNewRelation) {
       setRelations((prevRelations) =>
         prevRelations.map((r) =>
           r.id === relationToEdit.id ? { ...r, ...newRelation } : r
@@ -349,6 +383,7 @@ const ManageCastingRelation = () => {
     }
     setShowForm(false);
     setRelationToEdit(null);
+    setIsNewRelation(false);
   };
 
   if (loading) {
@@ -364,10 +399,15 @@ const ManageCastingRelation = () => {
       {showForm ? (
         <CastingRelationForm
           onSaveRelation={handleSaveRelation}
-          onCancel={() => setShowForm(false)}
+          onCancel={() => {
+            setShowForm(false);
+            setRelationToEdit(null);
+            setIsNewRelation(false);
+          }}
           relationToEdit={relationToEdit || undefined}
           films={films}
           castings={castings}
+          isNewRelation={isNewRelation}
         />
       ) : (
         <>
@@ -377,12 +417,12 @@ const ManageCastingRelation = () => {
                 Manage Casting Relations
               </h1>
             </div>
-            <Button onClick={() => setShowForm(true)} className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white">
+            <Button onClick={handleAddNewRelation} className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white">
               <FaPlus className="mr-2" /> Tambah Casting Relation
             </Button>
           </div>
 
-          {relations.length === 0 && (
+          {filteredRelations.length === 0 && (
             <Alert variant="destructive" className="mb-4">
               Tidak ada casting relation untuk ditampilkan.
             </Alert>
@@ -452,7 +492,7 @@ const ManageCastingRelation = () => {
               </Button>
               <Button
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || totalPages === 0}
                 className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white"
               >
                 Selanjutnya

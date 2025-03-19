@@ -51,13 +51,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PUT') {
-      const { name, email, role, isActive, imageUrl } = req.body;
+      const { name, email, role, isActive, imageUrl, telephone } = req.body;
 
       const updatedUser = await prisma.user.update({
         where: { id: String(id) },
         data: { 
           name,
           email,
+          telephone,
           role,
           isActive,
           imageUrl

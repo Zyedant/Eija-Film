@@ -39,8 +39,28 @@ const ManageCasting = () => {
   const [castingToDelete, setCastingToDelete] = useState<string | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  const { search } = router.query;
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (search) {
+      setSearchQuery(search as string);
+    } else {
+      setSearchQuery("");
+    }
+  }, [search]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      router.push({
+        pathname: router.pathname,
+        query: { ...router.query, search: searchQuery },
+      });
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   useEffect(() => {
     const fetchCastings = async () => {
@@ -89,7 +109,7 @@ const ManageCasting = () => {
     }
 
     setIsLoading(true);
-    setErrorMessage(""); 
+    setErrorMessage("");
 
     try {
       const token = Cookies.get('token');
@@ -192,7 +212,7 @@ const ManageCasting = () => {
       {showForm ? (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
           <h2 className="text-2xl font-semibold text-yellow-500 mb-4">
-            {editCastingId ? "Edit Casting" : "Add New Casting"}
+            {editCastingId ? "Edit Casting" : "Tambah Casting"}
           </h2>
           {errorMessage && <Alert variant="default" className="mb-4">{errorMessage}</Alert>}
 

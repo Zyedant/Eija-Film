@@ -136,8 +136,30 @@ const ManageCommentRating = () => {
   const [itemToDelete, setItemToDelete] = useState<{ commentId: string; ratingId?: string } | null>(null);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-
   const router = useRouter();
+  const { search } = router.query; // Ambil query `search` dari URL
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Ambil query `search` dari URL dan set ke state `searchQuery`
+  useEffect(() => {
+    if (search) {
+      setSearchQuery(search as string);
+    } else {
+      setSearchQuery("");
+    }
+  }, [search]);
+
+  // Sinkronkan state `searchQuery` dengan query URL
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      router.push({
+        pathname: router.pathname,
+        query: { ...router.query, search: searchQuery },
+      });
+    }, 300); // Debounce untuk menghindari terlalu banyak request
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   const fetchData = async () => {
     const token = Cookies.get("token");
@@ -188,6 +210,34 @@ const ManageCommentRating = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Filter data berdasarkan searchQuery
+  const filteredCommentsRatings = commentsRatings.filter((item) => {
+    const searchLower = searchQuery.toLowerCase();
+    const user = users.find((user) => user.id === item.userId);
+    const film = films.find((film) => film.id === item.filmId);
+
+    return (
+      item.content.toLowerCase().includes(searchLower) ||
+      (user?.name.toLowerCase().includes(searchLower)) ||
+      (film?.title.toLowerCase().includes(searchLower))
+    );
+  });
+
+  const totalItems = filteredCommentsRatings.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentCommentsRatings = filteredCommentsRatings.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1);
+  };
 
   const handleSave = async (data: { filmId: string; content: string; score: number }) => {
     const token = Cookies.get("token");
@@ -300,21 +350,6 @@ const ManageCommentRating = () => {
 
   const canEditOrDelete = (data: CommentRating) => {
     return userRole === "ADMIN" || data.userId === userId;
-  };
-
-  const totalItems = commentsRatings.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentCommentsRatings = commentsRatings.slice(startIndex, endIndex);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(Number(value));
-    setCurrentPage(1);
   };
 
   if (loading) return <div>Memuat...</div>;

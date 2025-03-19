@@ -48,12 +48,10 @@ const Register = () => {
 
   return (
     <div className="relative flex justify-center items-center min-h-screen bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 animate-gradient-x">
-      {/* Background with floating particles */}
       <div className="absolute inset-0 bg-cover bg-center bg-opacity-30 bg-blur-sm" style={{ backgroundImage: 'url("/images/gold-texture.jpg")' }}></div>
       
       <div className="absolute inset-0 bg-black opacity-50"></div>
 
-      {/* Glassmorphism effect for the form */}
       <div className="relative z-10 bg-white dark:bg-gray-800 bg-opacity-50 backdrop-blur-lg p-8 rounded-lg shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 mb-4">
           Register

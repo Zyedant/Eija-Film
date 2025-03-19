@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const { name, email, password, role, isActive, imageUrl } = req.body;
+      const { name, email, password, role, isActive, imageUrl, telephone } = req.body;
 
       if (!name || !email || !password) {
         return res.status(400).json({ error: 'Nama, email, dan password diperlukan' });
@@ -54,6 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: {
           name,
           email,
+          telephone,
           password: hashedPassword,
           role: role || 'USER', 
           isActive: isActive !== undefined ? isActive : true, 
