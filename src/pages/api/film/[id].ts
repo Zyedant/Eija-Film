@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import { parse } from 'path';
 
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -75,9 +74,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'DELETE') {
+      await prisma.genreRelation.deleteMany({
+        where: { filmId: String(id) },
+      });
+
+      await prisma.castingRelation.deleteMany({
+        where: { filmId: String(id) },
+      });
+
+      await prisma.comment.deleteMany({
+        where: { filmId: String(id) },
+      });
+
+      await prisma.rating.deleteMany({
+        where: { filmId: String(id) },
+      });
+
+      await prisma.bookmark.deleteMany({
+        where: { filmId: String(id) },
+      });
+
       await prisma.film.delete({
         where: { id: String(id) },
       });
+
       return res.status(204).end();
     }
 

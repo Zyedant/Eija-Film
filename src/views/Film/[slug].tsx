@@ -574,17 +574,27 @@ const FilmDetail = () => {
               alt={film.title}
               className={`w-full rounded-xl shadow-2xl transform hover:scale-105 transition-transform duration-300 ${isDarkMode ? "border-2 border-yellow-500/30" : "border-2 border-yellow-600/30"}`}
             />
-            {film.trailerUrl && (
+            {film.trailerUrl && film.trailerUrl.trim() !== "" && (
               <div className="mt-4">
                 <Button
                   variant="default"
                   className={`w-full flex items-center gap-2 ${isDarkMode ? "bg-yellow-500 hover:bg-yellow-600 text-black" : "bg-yellow-600 hover:bg-yellow-700 text-white"}`}
-                  onClick={() => setShowTrailerModal(true)}
+                  onClick={() => {
+                    console.log("Tombol diklik, menampilkan modal");
+                    setShowTrailerModal(true);
+                  }}
                 >
                   <FaPlayCircle className="w-5 h-5" />
                   Tonton Trailer
                 </Button>
               </div>
+            )}
+            
+            {showTrailerModal && (
+              <TrailerModal
+                trailerUrl={film.trailerUrl}
+                onClose={() => setShowTrailerModal(false)}
+              />
             )}
           </div>
 

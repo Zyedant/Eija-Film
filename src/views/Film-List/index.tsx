@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
-import { FaFilter, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaFilter, FaChevronLeft, FaChevronRight, FaAngleDown } from "react-icons/fa";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { FaRegClock, FaCalendarAlt, FaFilm, FaTv, FaRocket, FaPlay, FaStar } from "react-icons/fa";
@@ -28,13 +28,15 @@ const FilmList = () => {
   const [genres, setGenres] = useState<string[]>([]); 
   const [categories, setCategories] = useState<string[]>([]); 
   const [releaseYears, setReleaseYears] = useState<number[]>([]); 
-  const [selectedGenre, setSelectedGenre] = useState<string>(""); 
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]); 
   const [selectedCategory, setSelectedCategory] = useState<string>(""); 
   const [selectedReleaseYear, setSelectedReleaseYear] = useState<string>(""); 
   const [isLoading, setIsLoading] = useState<boolean>(true); 
-  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false); 
+  const [isFilterOpen, setIsFilterOpen] = useState<boolean>(false);
+  const [isGenreDropdownOpen, setIsGenreDropdownOpen] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const router = useRouter();
+  const genreDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleThemeChange = () => {
@@ -84,12 +86,37 @@ const FilmList = () => {
     fetchFilms();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (genreDropdownRef.current && !genreDropdownRef.current.contains(event.target as Node)) {
+        setIsGenreDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleGenreChange = (genre: string) => {
+    setSelectedGenres(prev => {
+      if (prev.includes(genre)) {
+        return prev.filter(g => g !== genre);
+      } else {
+        return [...prev, genre];
+      }
+    });
+  };
+
   const handleFilterChange = () => {
     let filtered = films;
 
-    if (selectedGenre) {
+    if (selectedGenres.length > 0) {
       filtered = filtered.filter((film) =>
-        film.genreRelations.some((relation) => relation.genre.name === selectedGenre)
+        selectedGenres.every((genre) =>
+          film.genreRelations.some((relation) => relation.genre.name === genre)
+        )
       );
     }
 
@@ -107,7 +134,7 @@ const FilmList = () => {
   };
 
   const handleResetFilters = () => {
-    setSelectedGenre("");
+    setSelectedGenres([]);
     setSelectedCategory("");
     setSelectedReleaseYear("");
     setFilteredFilms(films);
@@ -115,6 +142,10 @@ const FilmList = () => {
 
   const toggleFilter = () => {
     setIsFilterOpen(!isFilterOpen);
+  };
+
+  const toggleGenreDropdown = () => {
+    setIsGenreDropdownOpen(!isGenreDropdownOpen);
   };
 
   const navigateToFilm = (slug: string) => router.push(`/film/${slug}`);
@@ -255,26 +286,59 @@ const FilmList = () => {
               : "bg-gray-200"
           }`}>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
+              <div ref={genreDropdownRef}>
                 <label className={`block font-medium mb-2 ${
                   isDarkMode ? "text-gray-300" : "text-gray-700"
                 }`}>Genre</label>
-                <select
-                  value={selectedGenre}
-                  onChange={(e) => setSelectedGenre(e.target.value)}
-                  className={`w-full p-2 rounded-lg ${
-                    isDarkMode 
-                      ? "bg-gray-800 text-gray-300 border-gray-700" 
-                      : "bg-white text-gray-700 border-gray-300"
-                  }`}
-                >
-                  <option value="">All Genres</option>
-                  {genres.map((genre) => (
-                    <option key={genre} value={genre}>
-                      {genre}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button
+                    onClick={toggleGenreDropdown}
+                    className={`w-full p-2 rounded-lg flex justify-between items-center ${
+                      isDarkMode 
+                        ? "bg-gray-800 text-gray-300 border-gray-700 border" 
+                        : "bg-white text-gray-700 border-gray-300 border"
+                    }`}
+                  >
+                    <span>
+                      {selectedGenres.length > 0 
+                        ? `${selectedGenres.length} genre${selectedGenres.length > 1 ? 's' : ''} selected` 
+                        : 'All Genres'}
+                    </span>
+                    <FaAngleDown className={`transition-transform ${isGenreDropdownOpen ? 'transform rotate-180' : ''}`} />
+                  </button>
+                  
+                  {isGenreDropdownOpen && (
+                    <div className={`absolute z-10 mt-1 w-full rounded-lg shadow-lg ${
+                      isDarkMode 
+                        ? "bg-gray-800 text-gray-300 border border-gray-700" 
+                        : "bg-white text-gray-700 border border-gray-300"
+                    }`}>
+                      <div className="p-3 max-h-48 overflow-y-auto">
+                        {genres.map((genre) => (
+                          <div key={genre} className="mb-1 flex items-center">
+                            <input
+                              type="checkbox"
+                              id={`genre-${genre}`}
+                              checked={selectedGenres.includes(genre)}
+                              onChange={() => handleGenreChange(genre)}
+                              className={`mr-2 ${
+                                isDarkMode 
+                                  ? "bg-gray-700 border-gray-600" 
+                                  : "bg-gray-100 border-gray-300"
+                              }`}
+                            />
+                            <label 
+                              htmlFor={`genre-${genre}`}
+                              className="cursor-pointer text-sm"
+                            >
+                              {genre}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>

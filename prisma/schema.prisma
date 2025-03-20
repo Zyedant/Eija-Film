@@ -63,10 +63,10 @@ model Film {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   castingRelations  CastingRelation[] 
-  genreRelations    GenreRelation[]
-  comments          Comment[]
-  ratings           Rating[]
-  bookmarks         Bookmark[]
+  genreRelations    GenreRelation[]   
+  comments          Comment[]         
+  ratings           Rating[]          
+  bookmarks         Bookmark[]    
   category          Category    
 }
 

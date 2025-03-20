@@ -46,21 +46,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const { filmId, castingId, role } = req.body;
+      const { filmId, castings } = req.body;
 
-      if (!filmId || !castingId || !role) {
-        return res.status(400).json({ error: 'Film ID, Casting ID, dan Role diperlukan' });
+      if (!filmId || !castings || !Array.isArray(castings)) {
+        return res.status(400).json({ error: 'Film ID dan Castings diperlukan' });
       }
 
-      const newCastingRelation = await prisma.castingRelation.create({
-        data: {
-          filmId,
-          castingId,
-          role,
-        },
-      });
+      // Buat banyak casting relations
+      const newCastingRelations = await prisma.$transaction(
+        castings.map((casting) =>
+          prisma.castingRelation.create({
+            data: {
+              filmId,
+              castingId: casting.castingId,
+              role: casting.role,
+            },
+          })
+        )
+      );
 
-      return res.status(201).json(newCastingRelation);
+      return res.status(201).json(newCastingRelations);
     }
 
     return res.status(405).json({ error: 'Method Not Allowed' });

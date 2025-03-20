@@ -55,17 +55,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PUT') {
-      const { filmId, castingId, role } = req.body;
+      const { role } = req.body;
 
-      if (!filmId || !castingId || !role) {
-        return res.status(400).json({ error: 'Film ID, Casting ID, and Role are required' });
+      if (!role) {
+        return res.status(400).json({ error: 'Role is required' });
       }
 
       const updatedCastingRelation = await prisma.castingRelation.update({
         where: { id: String(id) },
         data: {
-          filmId,
-          castingId,
           role,
         },
       });

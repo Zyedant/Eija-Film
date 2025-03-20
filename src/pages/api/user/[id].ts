@@ -69,6 +69,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'DELETE') {
+      await prisma.comment.deleteMany({
+        where: { userId: String(id) },
+      });
+
+      await prisma.rating.deleteMany({
+        where: { userId: String(id) },
+      });
+
       await prisma.user.delete({
         where: { id: String(id) },
       });

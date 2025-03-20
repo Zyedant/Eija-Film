@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import { FaEdit, FaTrash, FaPlus, FaFilter } from "react-icons/fa";
 import axios from "axios";
 import Cookies from 'js-cookie';
 import jwt from 'jsonwebtoken';
@@ -211,6 +211,9 @@ const ManageUser = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [isActiveFilter, setIsActiveFilter] = useState<string>("all");
+  const [isFilterOpen, setIsFilterOpen] = useState(false); // State untuk menampilkan filter
   const router = useRouter();
 
   const { search } = router.query;
@@ -275,11 +278,21 @@ const ManageUser = () => {
   }, [currentUser, isAdmin]);
 
   const searchQuery = Array.isArray(search) ? search[0] : search || "";
-  const filteredUsers = users.filter(
-    (user) =>
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesRole = roleFilter === "all" ? true : user.role === roleFilter;
+    const matchesIsActive =
+      isActiveFilter === "all"
+        ? true
+        : isActiveFilter === "true"
+        ? user.isActive
+        : !user.isActive;
+
+    return matchesSearch && matchesRole && matchesIsActive;
+  });
 
   const totalItems = filteredUsers.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -355,6 +368,11 @@ const ManageUser = () => {
     setCurrentPage(1);
   };
 
+  const resetFilters = () => {
+    setRoleFilter("all");
+    setIsActiveFilter("all");
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -379,19 +397,102 @@ const ManageUser = () => {
                 Manage User
               </h1>
             </div>
-            <Button onClick={() => setShowForm(true)} className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white">
-              <FaPlus className="mr-2" /> Tambah Pengguna
-            </Button>
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white"
+              >
+                <FaFilter className="mr-2" /> Filter
+              </Button>
+              <Button onClick={() => setShowForm(true)} className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white">
+                <FaPlus className="mr-2" /> Tambah Pengguna
+              </Button>
+            </div>
           </div>
 
+          {isFilterOpen && (
+            <div className="mb-6 p-4 rounded-lg shadow-lg bg-white dark:bg-gray-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block font-medium mb-2 text-gray-900 dark:text-gray-300">Role</label>
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
+                  >
+                    <option value="all">Semua Role</option>
+                    <option value="USER">User</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="AUTHOR">Author</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-medium mb-2 text-gray-900 dark:text-gray-300">Status</label>
+                  <select
+                    value={isActiveFilter}
+                    onChange={(e) => setIsActiveFilter(e.target.value)}
+                    className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
+                  >
+                    <option value="all">Semua Status</option>
+                    <option value="true">Aktif</option>
+                    <option value="false">Tidak Aktif</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-between">
+                <Button
+                  onClick={resetFilters}
+                  className="bg-gray-500 text-white hover:bg-gray-600"
+                >
+                  Reset Filters
+                </Button>
+                <Button
+                  onClick={() => setCurrentPage(1)}
+                  className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white"
+                >
+                  Terapkan
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Active filters display */}
+          {(roleFilter !== "all" || isActiveFilter !== "all") && (
+            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Filter aktif:</span>
+                {roleFilter !== "all" && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
+                    Role: {roleFilter}
+                  </span>
+                )}
+                {isActiveFilter !== "all" && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
+                    Status: {isActiveFilter === "true" ? "Aktif" : "Tidak Aktif"}
+                  </span>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={resetFilters}
+                  className="ml-auto text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/50"
+                >
+                  Hapus semua filter
+                </Button>
+              </div>
+            </div>
+          )}
+
           {filteredUsers.length === 0 && (
-            <Alert variant="destructive" className="mb-4 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+            <Alert variant="destructive" className="mb-4">
               Tidak ada pengguna untuk ditampilkan.
             </Alert>
           )}
 
           <div className="overflow-x-auto border border-gray-300 dark:border-gray-700 rounded-lg">
-            <Table className="min-w-max table-auto text-sm overflow-x-auto bg-white dark:bg-gray-800">
+            <Table className="min-w-max table-auto text-sm overflow-x-auto">
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white dark:bg-gradient-to-r dark:from-yellow-600 dark:via-yellow-700 dark:to-yellow-800">
                   <TableCell className="py-3 px-4 text-left font-semibold">Nama</TableCell>
@@ -461,10 +562,10 @@ const ManageUser = () => {
                   <SelectValue placeholder="10" />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600">
-                  <SelectItem value="5" className="hover:bg-gray-100 dark:hover:bg-gray-600">5</SelectItem>
-                  <SelectItem value="10" className="hover:bg-gray-100 dark:hover:bg-gray-600">10</SelectItem>
-                  <SelectItem value="20" className="hover:bg-gray-100 dark:hover:bg-gray-600">20</SelectItem>
-                  <SelectItem value="50" className="hover:bg-gray-100 dark:hover:bg-gray-600">50</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
                 </SelectContent>
               </Select>
               <span className="text-sm text-gray-600 dark:text-gray-400">data per halaman</span>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaEye, FaTrash, FaPlus, FaArrowLeft, FaEdit, FaSave } from "react-icons/fa";
+import { FaEye, FaPlus, FaTrash, FaFilter, FaCheck } from "react-icons/fa";
 import axios from "axios";
 import Cookies from 'js-cookie';
 import jwt from 'jsonwebtoken';
@@ -24,618 +24,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface User {
-  id: string;
-  name: string;
-  role: string;
-}
-
-interface Film {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  posterUrl: string;
-  trailerUrl: string;
-  duration: number;
-  releaseYear: number;
-  category: string;
-  episode?: number;
-  userId: string;
-}
-
-const FilmDetail = ({ film, onBack, users, onSave }: { film: Film; onBack: () => void; users: User[]; onSave: (film: Film) => void }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedFilm, setEditedFilm] = useState(film);
-  const [uploadTypePoster, setUploadTypePoster] = useState('url');
-  const [uploadTypeTrailer, setUploadTypeTrailer] = useState('url');
-
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleSave = async () => {
-    try {
-      const token = Cookies.get('token');
-      await axios.put(`/api/film/${film.id}`, editedFilm, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setIsEditing(false);
-      onSave(editedFilm);
-    } catch (error) {
-      console.error("Gagal menyimpan perubahan", error);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, field: keyof Film) => {
-    const value = field === 'releaseYear' || field === 'duration' || field === 'episode' 
-      ? parseInt(e.target.value, 10) 
-      : e.target.value;
-  
-    setEditedFilm({
-      ...editedFilm,
-      [field]: value,
-    });
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "poster" | "trailer") => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const token = Cookies.get('token');
-        const response = await axios.post('/api/upload', formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        const fileUrl = response.data.imageUrl;
-        if (type === "poster") {
-          setEditedFilm({ ...editedFilm, posterUrl: fileUrl });
-        } else if (type === "trailer") {
-          setEditedFilm({ ...editedFilm, trailerUrl: fileUrl });
-        }
-      } catch (error) {
-        console.error("Error uploading file", error);
-      }
-    }
-  };
-
-  const getUserNameById = (userId: string) => {
-    if (!users || users.length === 0) return "Anonim";
-    const user = users.find((user) => user.id === userId);
-    return user ? user.name : "Anonim";
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-yellow-500">Detail Film</h2>
-        <div className="flex space-x-4">
-          <Button
-            onClick={onBack}
-            className="flex items-center bg-gray-500 text-white hover:bg-gray-600"
-          >
-            <FaArrowLeft className="mr-2" /> Kembali
-          </Button>
-          {isEditing ? (
-            <Button
-              onClick={handleSave}
-              className="flex items-center bg-yellow-500 text-white hover:bg-yellow-600"
-            >
-              <FaSave className="mr-2" /> Simpan
-            </Button>
-          ) : (
-            <Button
-              onClick={handleEdit}
-              className="flex items-center bg-yellow-500 text-white hover:bg-yellow-600"
-            >
-              <FaEdit className="mr-2" /> Edit
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1">
-          <div className="flex flex-col space-y-4">
-            <div>
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Poster</h3>
-              <div className="aspect-[2/3] bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
-                {editedFilm.posterUrl ? (
-                  <img
-                    src={editedFilm.posterUrl}
-                    alt={editedFilm.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500">
-                    Tidak ada poster
-                  </div>
-                )}
-              </div>
-              {isEditing && (
-                <div className="mt-2">
-                  <select
-                    value={uploadTypePoster}
-                    onChange={(e) => setUploadTypePoster(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="url">URL</option>
-                    <option value="file">Upload File</option>
-                  </select>
-                  {uploadTypePoster === "url" ? (
-                    <input
-                      type="text"
-                      value={editedFilm.posterUrl}
-                      onChange={(e) => handleChange(e, "posterUrl")}
-                      className="w-full p-2 border border-gray-300 rounded-md mt-2"
-                      placeholder="Masukkan URL Poster"
-                    />
-                  ) : (
-                    <input
-                      type="file"
-                      onChange={(e) => handleFileChange(e, "poster")}
-                      className="w-full p-2 border border-gray-300 rounded-md mt-2"
-                    />
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Trailer</h3>
-              <div className="aspect-video bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden">
-                {editedFilm.trailerUrl && editedFilm.trailerUrl.includes('youtube') ? (
-                  <iframe
-                    src={editedFilm.trailerUrl.replace('watch?v=', 'embed/')}
-                    className="w-full h-full"
-                    allowFullScreen
-                  ></iframe>
-                ) : editedFilm.trailerUrl ? (
-                  <video
-                    src={editedFilm.trailerUrl}
-                    controls
-                    className="w-full h-full"
-                  >
-                    Browser Anda tidak mendukung pemutaran video
-                  </video>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-500">
-                    Tidak ada trailer
-                  </div>
-                )}
-              </div>
-              {isEditing && (
-                <div className="mt-2">
-                  <select
-                    value={uploadTypeTrailer}
-                    onChange={(e) => setUploadTypeTrailer(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="url">URL</option>
-                    <option value="file">Upload File</option>
-                  </select>
-                  {uploadTypeTrailer === "url" ? (
-                    <input
-                      type="text"
-                      value={editedFilm.trailerUrl}
-                      onChange={(e) => handleChange(e, "trailerUrl")}
-                      className="w-full p-2 border border-gray-300 rounded-md mt-2"
-                      placeholder="Masukkan URL Trailer"
-                    />
-                  ) : (
-                    <input
-                      type="file"
-                      onChange={(e) => handleFileChange(e, "trailer")}
-                      className="w-full p-2 border border-gray-300 rounded-md mt-2"
-                    />
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="md:col-span-2">
-          <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg h-full">
-            <h1 className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={editedFilm.title}
-                  onChange={(e) => handleChange(e, "title")}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              ) : (
-                editedFilm.title
-              )}
-            </h1>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Slug</h3>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedFilm.slug}
-                      onChange={(e) => handleChange(e, "slug")}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    />
-                  ) : (
-                    <p className="text-gray-800 dark:text-gray-200">{editedFilm.slug}</p>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Kategori</h3>
-                  {isEditing ? (
-                    <select
-                      value={editedFilm.category}
-                      onChange={(e) => handleChange(e, "category")}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    >
-                      <option value="MOVIE">Movie</option>
-                      <option value="SERIES">Series</option>
-                      <option value="ANIME">Anime</option>
-                    </select>
-                  ) : (
-                    <div className="inline-block bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-3 py-1 rounded-full text-sm font-medium">
-                      {editedFilm.category}
-                    </div>
-                  )}
-                </div>
-
-                {(editedFilm.category === "SERIES" || editedFilm.category === "ANIME") && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Episode</h3>
-                    {isEditing ? (
-                      <input
-                        type="number"
-                        value={editedFilm.episode || 0}
-                        onChange={(e) => handleChange(e, "episode")}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                      />
-                    ) : (
-                      <p className="text-gray-800 dark:text-gray-200">{editedFilm.episode || 0}</p>
-                    )}
-                  </div>
-                )}
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Durasi</h3>
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      value={editedFilm.duration}
-                      onChange={(e) => handleChange(e, "duration")}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    />
-                  ) : (
-                    <p className="text-gray-800 dark:text-gray-200">{editedFilm.duration} menit</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Tahun Rilis</h3>
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      value={editedFilm.releaseYear}
-                      onChange={(e) => handleChange(e, "releaseYear")}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    />
-                  ) : (
-                    <p className="text-gray-800 dark:text-gray-200">{editedFilm.releaseYear}</p>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Diinput oleh</h3>
-                  <p className="text-gray-800 dark:text-gray-200">{getUserNameById(editedFilm.userId)}</p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">ID Film</h3>
-                  <p className="text-gray-800 dark:text-gray-200 break-all">{editedFilm.id}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Deskripsi</h3>
-              {isEditing ? (
-                <textarea
-                  value={editedFilm.description}
-                  onChange={(e) => handleChange(e, "description")}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                />
-              ) : (
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-600 min-h-32">
-                  <p className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{editedFilm.description || "Tidak ada deskripsi"}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">URLs</h3>
-              <div className="space-y-2">
-                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
-                  <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Poster URL</h4>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedFilm.posterUrl}
-                      onChange={(e) => handleChange(e, "posterUrl")}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    />
-                  ) : (
-                    <p className="text-gray-800 dark:text-gray-200 text-sm break-all">{editedFilm.posterUrl || "N/A"}</p>
-                  )}
-                </div>
-                <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
-                  <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Trailer URL</h4>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editedFilm.trailerUrl}
-                      onChange={(e) => handleChange(e, "trailerUrl")}
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                    />
-                  ) : (
-                    <p className="text-gray-800 dark:text-gray-200 text-sm break-all">{editedFilm.trailerUrl || "N/A"}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const FilmForm = ({ onSaveFilm, onCancel }: { onSaveFilm: (film: Film) => void; onCancel: () => void }) => {
-  const [title, setTitle] = useState("");
-  const [slug, setSlug] = useState("");
-  const [description, setDescription] = useState("");
-  const [posterUrl, setPosterUrl] = useState("");
-  const [trailerUrl, setTrailerUrl] = useState("");
-  const [duration, setDuration] = useState(0);
-  const [releaseYear, setReleaseYear] = useState(0);
-  const [episode, setEpisode] = useState(0);
-  const [category, setCategory] = useState("MOVIE");
-  const [uploadTypePoster, setUploadTypePoster] = useState('url');
-  const [uploadTypeTrailer, setUploadTypeTrailer] = useState('url');
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: "poster" | "trailer") => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const token = Cookies.get('token');
-        const response = await axios.post('/api/upload', formData, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        const fileUrl = response.data.imageUrl;
-        if (type === "poster") {
-          setPosterUrl(fileUrl);
-        } else if (type === "trailer") {
-          setTrailerUrl(fileUrl);
-        }
-      } catch (error) {
-        console.error("Error uploading file", error);
-      }
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const token = Cookies.get('token');
-    if (!token) {
-      console.error("User tidak ditemukan atau belum login.");
-      return;
-    }
-
-    try {
-      const decoded = jwt.decode(token) as { id: string };
-      const userId = decoded.id;
-
-      const newFilm: Film = {
-        id: "", 
-        title,
-        slug,
-        description,
-        posterUrl,
-        trailerUrl,
-        duration: parseInt(duration.toString(), 10),
-        releaseYear: parseInt(releaseYear.toString(), 10),
-        category,
-        episode: category === 'MOVIE' ? undefined : parseInt(episode.toString(), 10),
-        userId,
-      };
-
-      await axios.post("/api/film", newFilm, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      onSaveFilm(newFilm);
-    } catch (error) {
-      console.error("Gagal menyimpan film", error);
-    }
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-      <div className="flex justify-between mb-6">
-        <h2 className="text-2xl font-semibold text-yellow-500">Tambah Film</h2>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Judul</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md"
-            required
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Slug</label>
-          <input
-            type="text"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md"
-            required
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md"
-          >
-            <option value="MOVIE">Movie</option>
-            <option value="SERIES">Series</option>
-            <option value="ANIME">Anime</option>
-          </select>
-        </div>
-
-        {(category === "SERIES" || category === "ANIME") && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Episode</label>
-            <input
-              type="number"
-              value={episode}
-              onChange={(e) => setEpisode(parseInt(e.target.value, 10))}
-              className="w-full p-3 border border-gray-300 rounded-md"
-              min="0"
-            />
-          </div>
-        )}
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Deskripsi</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-md"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Poster</label>
-          <select
-            value={uploadTypePoster}
-            onChange={(e) => setUploadTypePoster(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md mb-2"
-          >
-            <option value="url">URL</option>
-            <option value="file">Upload File</option>
-          </select>
-          {uploadTypePoster === "url" ? (
-            <input
-              type="text"
-              value={posterUrl}
-              onChange={(e) => setPosterUrl(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md"
-              placeholder="Masukkan URL Poster"
-            />
-          ) : (
-            <input
-              type="file"
-              onChange={(e) => handleFileChange(e, "poster")}
-              className="w-full p-3 border border-gray-300 rounded-md"
-            />
-          )}
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Trailer</label>
-          <select
-            value={uploadTypeTrailer}
-            onChange={(e) => setUploadTypeTrailer(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md mb-2"
-          >
-            <option value="url">URL</option>
-            <option value="file">Upload File</option>
-          </select>
-          {uploadTypeTrailer === "url" ? (
-            <input
-              type="text"
-              value={trailerUrl}
-              onChange={(e) => setTrailerUrl(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md"
-              placeholder="Masukkan URL Trailer"
-            />
-          ) : (
-            <input
-              type="file"
-              onChange={(e) => handleFileChange(e, "trailer")}
-              className="w-full p-3 border border-gray-300 rounded-md"
-            />
-          )}
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Durasi (menit)</label>
-          <input
-            type="number"
-            value={duration}
-            onChange={(e) => setDuration(parseInt(e.target.value, 10))}
-            className="w-full p-3 border border-gray-300 rounded-md"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tahun Rilis</label>
-          <input
-            type="number"
-            value={releaseYear}
-            onChange={(e) => setReleaseYear(parseInt(e.target.value, 10))}
-            className="w-full p-3 border border-gray-300 rounded-md"
-          />
-        </div>
-
-        <div className="flex justify-between mt-4">
-          <Button type="submit" className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white">
-            Tambah Film
-          </Button>
-          <Button type="button" onClick={onCancel} className="bg-gray-500 text-white">
-            Batal
-          </Button>
-        </div>
-      </form>
-    </div>
-  );
-};
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import FilmDetail from "./Film-Detail";
+import FilmForm from "./Film-Form";
+import { Film, User, Genre, GenreRelation } from "./types";
 
 const ManageFilm = () => {
   const [films, setFilms] = useState<Film[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [genreRelations, setGenreRelations] = useState<GenreRelation[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [selectedFilm, setSelectedFilm] = useState<Film | null>(null);
@@ -646,6 +51,13 @@ const ManageFilm = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const router = useRouter();
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [yearFilter, setYearFilter] = useState<string>("all");
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isGenrePopoverOpen, setIsGenrePopoverOpen] = useState(false);
 
   const { search } = router.query;
 
@@ -703,6 +115,31 @@ const ManageFilm = () => {
         });
 
         setUsers(userResponse.data);
+
+        const genreResponse = await axios.get("/api/genre", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setGenres(genreResponse.data);
+
+        const genreRelationsResponse = await axios.get("/api/genre-relation", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setGenreRelations(genreRelationsResponse.data);
+
+        const categories = [...new Set(filmResponse.data.map((film: Film) => film.category))];
+        setAvailableCategories(categories.filter((category): category is string => typeof category === 'string'));
+
+        const years = [...new Set(filmResponse.data.map((film: Film) => film.releaseYear))];
+        setAvailableYears(
+          years
+            .filter((year): year is number => typeof year === 'number')
+            .sort((a, b) => b - a)
+        );
+
         setLoading(false);
       } catch (error) {
         console.error("Gagal mengambil data film dan pengguna", error);
@@ -715,11 +152,52 @@ const ManageFilm = () => {
     }
   }, [currentUser, isAdmin]);
 
-  const filteredFilms = films.filter(
-    (film) =>
-      film.title.toLowerCase().includes((search?.toString() || "").toLowerCase()) ||
-      film.slug.toLowerCase().includes((search?.toString() || "").toLowerCase())
-  );
+  const getFilmGenres = (filmId: string) => {
+    const filmGenreRelations = genreRelations.filter(relation => relation.filmId === filmId);
+    return filmGenreRelations.map(relation => {
+      const genre = genres.find(g => g.id === relation.genreId);
+      return genre ? genre.name : "";
+    });
+  };
+
+  const resetFilters = () => {
+    setCategoryFilter("all");
+    setSelectedGenres([]);
+    setYearFilter("all");
+  };
+
+  const handleGenreChange = (genreName: string) => {
+    setSelectedGenres(prev => {
+      if (prev.includes(genreName)) {
+        return prev.filter(g => g !== genreName);
+      } else {
+        return [...prev, genreName];
+      }
+    });
+  };
+
+  const filteredFilms = films.filter(film => {
+    const matchesSearch = search 
+      ? film.title.toLowerCase().includes((search.toString() || "").toLowerCase()) ||
+        film.slug.toLowerCase().includes((search.toString() || "").toLowerCase())
+      : true;
+
+    const matchesCategory = categoryFilter === "all" 
+      ? true 
+      : film.category === categoryFilter;
+
+    const matchesYear = yearFilter === "all" 
+      ? true 
+      : film.releaseYear === parseInt(yearFilter);
+
+    const filmGenres = getFilmGenres(film.id);
+
+    const matchesGenre = selectedGenres.length === 0 
+      ? true 
+      : selectedGenres.every(genre => filmGenres.includes(genre));
+
+    return matchesSearch && matchesCategory && matchesYear && matchesGenre;
+  });
 
   const totalItems = filteredFilms.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -759,6 +237,9 @@ const ManageFilm = () => {
       setShowDeleteDialog(false);
     } catch (error) {
       console.error("Gagal menghapus film", error);
+      if (axios.isAxiosError(error) && error.response) {
+        console.error("Server responded with:", error.response.data);
+      }
     }
   };
 
@@ -822,10 +303,170 @@ const ManageFilm = () => {
                 Manage Film
               </h1>
             </div>
-            <Button onClick={() => setShowForm(true)} className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white">
-              <FaPlus className="mr-2" /> Tambah Film
-            </Button>
+            <div className="flex space-x-2">
+              <Button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 text-white"
+              >
+                <FaFilter className="mr-2" /> Filter
+              </Button>
+              <Button onClick={() => setShowForm(true)} className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white">
+                <FaPlus className="mr-2" /> Tambah Film
+              </Button>
+            </div>
           </div>
+
+          {isFilterOpen && (
+            <div className="mb-6 p-4 rounded-lg shadow-lg bg-white dark:bg-gray-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block font-medium mb-2 text-gray-900 dark:text-gray-300">Kategori</label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
+                  >
+                    <option value="all">Semua Kategori</option>
+                    {availableCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-medium mb-2 text-gray-900 dark:text-gray-300">Genre</label>
+                  <Select 
+                    value={selectedGenres.length === 0 ? "all" : "custom"}
+                    onValueChange={(value) => {
+                      if (value === "all") {
+                        setSelectedGenres([]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600">
+                      <SelectValue placeholder={
+                        selectedGenres.length === 0 
+                          ? "Semua Genre" 
+                          : selectedGenres.length === 1 
+                            ? selectedGenres[0] 
+                            : `${selectedGenres.length} genre dipilih`
+                      } />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60 overflow-y-auto bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600">
+                      <div className="p-2">
+                        <div className="flex items-center mb-2">
+                          <Checkbox 
+                            id="select-all-genres" 
+                            checked={selectedGenres.length === genres.length}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedGenres(genres.map(g => g.name));
+                              } else {
+                                setSelectedGenres([]);
+                              }
+                            }}
+                          />
+                          <label htmlFor="select-all-genres" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                            Pilih Semua
+                          </label>
+                        </div>
+                        <hr className="my-2 border-gray-200 dark:border-gray-600" />
+                        {genres.map((genre) => (
+                          <div key={genre.id} className="flex items-center py-1">
+                            <Checkbox 
+                              id={`genre-${genre.id}`} 
+                              checked={selectedGenres.includes(genre.name)}
+                              onCheckedChange={() => handleGenreChange(genre.name)}
+                            />
+                            <label htmlFor={`genre-${genre.id}`} className="ml-2 text-sm text-gray-900 dark:text-gray-300">
+                              {genre.name}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block font-medium mb-2 text-gray-900 dark:text-gray-300">Tahun Rilis</label>
+                  <select
+                    value={yearFilter}
+                    onChange={(e) => setYearFilter(e.target.value)}
+                    className="w-full p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-300 border border-gray-300 dark:border-gray-600"
+                  >
+                    <option value="all">Semua Tahun</option>
+                    {availableYears.map((year) => (
+                      <option key={year} value={year.toString()}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-between">
+                <Button
+                  onClick={resetFilters}
+                  className="bg-gray-500 text-white hover:bg-gray-600"
+                >
+                  Reset Filters
+                </Button>
+                <Button
+                  onClick={() => {
+                    setCurrentPage(1);
+                    setIsFilterOpen(false);
+                  }}
+                  className="bg-gradient-to-r from-yellow-500 via-yellow-600 to-yellow-700 text-white"
+                >
+                  Terapkan
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {(categoryFilter !== "all" || selectedGenres.length > 0 || yearFilter !== "all") && (
+            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Filter aktif:</span>
+                {categoryFilter !== "all" && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
+                    Kategori: {categoryFilter}
+                  </span>
+                )}
+                {selectedGenres.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedGenres.map(genre => (
+                      <span key={genre} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
+                        Genre: {genre}
+                        <button 
+                          className="ml-1 text-yellow-600 hover:text-yellow-800 dark:text-yellow-300 dark:hover:text-yellow-100"
+                          onClick={() => handleGenreChange(genre)}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {yearFilter !== "all" && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200">
+                    Tahun: {yearFilter}
+                  </span>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={resetFilters}
+                  className="ml-auto text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/50"
+                >
+                  Hapus semua filter
+                </Button>
+              </div>
+            </div>
+          )}
 
           {filteredFilms.length === 0 && (
             <Alert variant="destructive" className="mb-4">
@@ -841,6 +482,7 @@ const ManageFilm = () => {
                   <TableCell className="py-3 px-4 text-left font-semibold">Judul</TableCell>
                   <TableCell className="py-3 px-4 text-left font-semibold">Slug</TableCell>
                   <TableCell className="py-3 px-4 text-left font-semibold">Kategori</TableCell>
+                  <TableCell className="py-3 px-4 text-left font-semibold">Genre</TableCell>
                   <TableCell className="py-3 px-4 text-left font-semibold">Durasi</TableCell>
                   <TableCell className="py-3 px-4 text-left font-semibold">Dirilis pada</TableCell>
                   <TableCell className="py-3 px-4 text-left font-semibold">Penginput</TableCell>
@@ -857,6 +499,9 @@ const ManageFilm = () => {
                     <TableCell className="py-3 px-4">{film.title}</TableCell>
                     <TableCell className="py-3 px-4">{film.slug}</TableCell>
                     <TableCell className="py-3 px-4">{film.category}</TableCell>
+                    <TableCell className="py-3 px-4">
+                      {getFilmGenres(film.id).join(", ")}
+                    </TableCell>
                     <TableCell className="py-3 px-4">{film.duration} menit</TableCell>
                     <TableCell className="py-3 px-4">{film.releaseYear}</TableCell>
                     <TableCell className="py-3 px-4">{getUserNameById(film.userId)}</TableCell>
